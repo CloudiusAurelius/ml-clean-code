@@ -42,7 +42,7 @@ def import_data(pth: str) -> pd.DataFrame:
             pth: a path to the csv
     Output:
             df: pandas dataframe
-    '''	    
+    '''
     # Read csv file
     logging.info(f"\nImporting data from {pth}")
     if not os.path.exists(pth):
@@ -70,7 +70,7 @@ def create_target(df: pd.DataFrame, target: str = 'Churn') -> pd.DataFrame:
             df: pandas dataframe with target column added
     '''
     logging.info(f"Creating target column [{target}] based on 'Attrition_Flag'.")
-        
+    
     # Create target column based on 'Attrition_Flag'
     df[target] = df['Attrition_Flag']\
         .apply(lambda val: 0 if val == "Existing Customer" else 1)
@@ -464,6 +464,15 @@ def plot_roc_curve(model1, X, y, model2=None,alpha=0.8):
 
 
 def shap_plot(model, X, output_path='./images/shap_summary_plot_rf.png'):
+        '''
+        Creates a SHAP summary plot for the given model and data.
+        Input:
+                model: trained model
+                X: feature data
+                output_path: path to save the SHAP summary plot
+        Output:
+                None
+        '''
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(X)
         plt.figure(figsize=(10, 5))
@@ -472,7 +481,7 @@ def shap_plot(model, X, output_path='./images/shap_summary_plot_rf.png'):
         plt.close()
         logging.info(f"SHAP summary plot for Random Forest Classifier saved in {shap_output_path}.")
 
-        return shap_values
+
 
 def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series) -> None:
     '''

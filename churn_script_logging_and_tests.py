@@ -27,6 +27,23 @@ def test_import(import_data):
 		raise err
 
 
+def test_create_target(create_target):
+	'''
+	test create_target function
+	'''
+	try:
+		df = create_target("./data/bank_data.csv")
+		logging.info("Testing create_target: SUCCESS")
+	except FileNotFoundError as err:
+		logging.error("Testing create_target: The file wasn't found")
+		raise err
+
+	try:
+		assert 'churn' in df.columns
+	except AssertionError as err:
+		logging.error("Testing create_target: The target column 'churn' was not created")
+		raise err
+
 def test_eda(perform_eda):
 	'''
 	test perform eda function
