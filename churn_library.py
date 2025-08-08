@@ -8,19 +8,23 @@
 # Import libraries
 import os
 os.environ['QT_QPA_PLATFORM']='offscreen'
+import logging
+import joblib
 
 import pandas as pd
 import numpy as np
-import sklearn as sk
+
 import matplotlib.pyplot as plt
 import seaborn as sns
+import shap
+
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import plot_roc_curve, classification_report
 
-import logging
+
 
 # Set up logging
 logging.basicConfig(
@@ -334,10 +338,49 @@ def classification_report_image(y_train: np.ndarray,
     Output:
              None
     '''
-    pass
+    logging.info("Generating classification reports for training and testing data.")
+    
+    # Random Forest Classifier
+    # ----------------------------------------------
+    logging.info("Random Forest Classifier")
+
+    # Generate classification report
+    plt.rc('figure', figsize=(5, 5))
+    plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')    
+    plt.axis('off')
+
+    # Save the classification report as an image
+    logging.info("Saving classification report for Random Forest Classifier.")
+    save_path_rf = './images/rfc_classification_report.png'
+    plt.savefig(save_path_rf)
+    plt.close()
+
+    # Logistic Regression Classifier
+    # ----------------------------------------------    
+    logging.info("Logistic Regression Classifier")
+    
+    # Generate classification report
+    plt.rc('figure', figsize=(5, 5))
+    plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.axis('off')
+
+    # Save the classification report as an image
+    logging.info("Saving classification report for Logistic Regression Classifier.")
+    save_path_lr = './images/lrc_classification_report.png'
+    plt.savefig(save_path_lr)
+    plt.close()
+    
 
 
-def feature_importance_plot(model: sk.base.BaseEstimator, X_data: pd.DataFrame, output_pth: str) -> None:
+def feature_importance_plot(model: sklearn.base.BaseEstimator,\
+                            X_data: pd.DataFrame,\
+                            output_pth: str='./images/feature_importance.png') -> None:
     '''
     Creates and stores the feature importances in pth
     Input:
@@ -348,12 +391,75 @@ def feature_importance_plot(model: sk.base.BaseEstimator, X_data: pd.DataFrame, 
     Output:
              None
     '''
-    pass
+    # Calculate feature importances
+    importances = model.feature_importances_
+
+    # Sort feature importances in descending order
+    indices = np.argsort(importances)[::-1]
+
+    # Rearrange feature names so they match the sorted feature importances
+    names = [X_data.columns[i] for i in indices]
+
+    # Create plot
+    plt.figure(figsize=(20,5))
+
+    # Create plot title
+    plt.title("Feature Importance")
+    plt.ylabel('Importance')
+
+    # Add bars
+    plt.bar(range(X_data.shape[1]), importances[indices])
+
+    # Add feature names as x-axis labels
+    plt.xticks(range(X_data.shape[1]), names, rotation=90)
+
+    # save the plot
+    logging.info(f"Saving feature importance plot to {output_pth}")
+    plt.savefig(output_pth)
+    plt.close()
 
 
+def plot_roc_curve(model1, X, y, model2=None,alpha=0.8):
+        '''
+        Plots the ROC curve for a given model and dataset.
+        Input:
+                model1: trained model
+                model2: second trained model (optional)
+                X: feature data
+                y: target data
+                ax: matplotlib axis object (optional)
+        Output:
+                None
+        '''
+        
+        model1_name = model1.__class__.__name__.lower()
+        if model2 is None:
+                logging.info(f"Plotting ROC curve of model: {model1.__class__.__name__}")
+                output_path = f'./images/{model1_name}_roc_curve.png'
+        
+                plt.figure(figsize=(10, 5))        
+                plot_roc_curve(model1, X, y, alpha=alpha)
+                plt.title(f"ROC Curve - {model1_name}")
+                plt.xlabel("False Positive Rate")
+                plt.ylabel("True Positive Rate")
+                plt.savefig(output_path)
+                plt.close()
+                logging.info(f"ROC curve for {model1_name} saved in {output_path}.")
+        else:                
+                model2_name = model2.__class__.__name__.lower()
+                logging.info(f"Plotting ROC curves of models: {model1} and {model2}")
+                output_path = f'./images/{model1_name}_{model2_name}_roc_curve.png'
 
-
-
+                plt.figure(figsize=(15, 8))
+                ax = plt.gca()
+                model1_plot = plot_roc_curve(model1, X, y, ax=ax, alpha=alpha)
+                model2_plot = plot_roc_curve(model2, X, y, ax=ax, alpha=alpha)
+                plt.title(f"ROC Curve - {model1_name} vs {model2_name}")
+                plt.xlabel("False Positive Rate")
+                plt.ylabel("True Positive Rate")
+                plt.savefig(output_path)
+                plt.close()
+                logging.info(f"ROC curve for {model1_name} and {model2_name} saved in {output_path}.")  
 
 def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series) -> None:
     '''
@@ -400,6 +506,19 @@ def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series
     lrc.fit(X_train, y_train)
 
 
+    # Store the models
+    # ----------------------------------------------
+    logging.info("Storing trained models in the models directory.")
+    
+    path_rc = './models/rfc_model.pkl'
+    joblib.dump(cv_rfc.best_estimator_, path_rc)
+    logging.info(f"Random Forest Classifier model stored as '{path_rc}'")
+    
+    path_lr = './models/logistic_model.pkl'
+    joblib.dump(lrc, path_lr)
+    logging.info(f"Logistic Regression model stored as '{path_lr}'")
+
+
     # Predict on training and testing data
     # ----------------------------------------------
     logging.info("Making predictions with trained models.")
@@ -414,9 +533,68 @@ def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series
     y_train_preds_lr = lrc.predict(X_train)
     y_test_preds_lr = lrc.predict(X_test)
 
-
     
 
+
+    # Classification report
+    # ----------------------------------------------    
+    classification_report_image(y_train,\
+        y_test,\
+        y_train_preds_lr,\
+        y_train_preds_rf,\
+        y_test_preds_lr,\
+        y_test_preds_rf)
+    
+    # ROC curve
+    # ----------------------------------------------   
+
+    # Plot ROC curve for Random Forest Classifer
+    logging.info("Plotting ROC curve for Random Forest Classifier.")
+    plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test)    
+
+    # Plot ROC curve for Logistic Regression
+    logging.info("Plotting ROC curve for Logistic Regression.")
+    plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test)    
+
+    # Combined ROC curve
+    logging.info("Plotting combined ROC curve for both models.")
+    plot_roc_curve(model1=cv_rfc.best_estimator_,\
+                   X=X_test,\
+                   y=y_test,\
+                   model2=lrc)
+    
+
+    # Detailed Analyses for Random Forest Classifier
+    # ----------------------------------------------
+    logging.info("Detailed analyses for Random Forest Classifier.")
+    
+    # Tree Explainer
+    logging.info("Using SHAP Tree Explainer for Random Forest Classifier.")
+    plt.rc('figure', figsize=(10, 5))
+    
+    # Create SHAP explainer
+    def shap_plot(model, X, output_path='./images/shap_summary_plot_rf.png'):
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(X)
+        plt.figure(figsize=(10, 5))
+        shap.summary_plot(shap_values, X_test, plot_type="bar")
+        plt.savefig(output_path)        
+        plt.close()
+        logging.info(f"SHAP summary plot for Random Forest Classifier saved in {shap_output_path}.")
+
+        return shap_values
+
+
+    logging.info("Calculating SHAP values for Random Forest Classifier.")    
+    explainer = shap.TreeExplainer(cv_rfc.best_estimator_)
+    shap_values = explainer.shap_values(X_test)
+    
+
+    # Feature importance plot    
+    logging.info("Creating feature importance plot for Random Forest Classifier.")
+    output_rf = './images/feature_importance_rf.png'
+    feature_importance_plot(cv_rfc.best_estimator_, X_train, output_rf)
+    
 
 if __name__ == "__main__":
     # Define variables
