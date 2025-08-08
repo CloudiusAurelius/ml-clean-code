@@ -12,6 +12,7 @@ Overview of the files and data present in the root directory.
 - images/
 - logs/
 - models/
+- tests/
 - churn_notebook.ipynb
 - churn_script_logging_and_tests.py
 - environment.yml

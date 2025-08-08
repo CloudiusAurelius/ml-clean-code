@@ -6,6 +6,7 @@
 
 
 # Import libraries
+from fileinput import filename
 import os
 os.environ['QT_QPA_PLATFORM']='offscreen'
 import logging
@@ -58,6 +59,7 @@ def import_data(pth: str) -> pd.DataFrame:
     logging.info("Data import complete.")
     return df
 
+
 def create_target(df: pd.DataFrame, target: str = 'Churn') -> pd.DataFrame:
     '''
     Create target column 'Churn' in the dataframe based on 'Attrition_Flag'.
@@ -79,7 +81,10 @@ def create_target(df: pd.DataFrame, target: str = 'Churn') -> pd.DataFrame:
     
     return df
 
-def create_target_dist_plot(df: pd.DataFrame, target: str = 'Churn') -> None:
+
+def create_target_dist_plot(df: pd.DataFrame,
+                            target: str = 'Churn',
+                            output_dir: str = f'./images/') -> None:
     '''
     Create a bar plot for the target distribution.
 
@@ -91,9 +96,9 @@ def create_target_dist_plot(df: pd.DataFrame, target: str = 'Churn') -> None:
             None
     '''
     logging.info("Plotting target distribution.")
-    output_path = f'./images/{target}_histogram.png'
-    
-    
+    filename = f'{target}_histogram.png'
+    output_path = os.path.join(output_dir, filename)
+
     plt.figure(figsize=(10, 5))
     df[target].hist()
     plt.title("Target Distribution")
@@ -105,7 +110,9 @@ def create_target_dist_plot(df: pd.DataFrame, target: str = 'Churn') -> None:
     logging.info(f"Target distribution plot for [{target}] saved in {output_path}.")
 
 
-def create_bar_plot(df: pd.DataFrame, column: str) -> None:
+def create_bar_plot(df: pd.DataFrame,
+                    column: str,
+                    output_dir: str = f'./images/') -> None:
     '''
     Helper function to create bar plots for categorical features.
     Input:
@@ -115,7 +122,8 @@ def create_bar_plot(df: pd.DataFrame, column: str) -> None:
         None
     '''
     logging.info(f"Creating bar plot for feature: {column}")
-    output_path = f'./images/cat_{column}_bar_plot.png'
+    filename = f'cat_{column}_bar_plot.png'
+    output_path = os.path.join(output_dir, filename)
 
     plt.figure(figsize=(20, 10))
     df[column]\
@@ -126,7 +134,9 @@ def create_bar_plot(df: pd.DataFrame, column: str) -> None:
     logging.info(f"Bar plot for {column} saved in {output_path}.")
 
 
-def create_histogram(df: pd.DataFrame, column: str) -> None:
+def create_histogram(df: pd.DataFrame,
+                     column: str,
+                     output_dir: str = f'./images/') -> None:
         '''
         Helper function to create histograms for quantitative features.
         Input:
@@ -136,7 +146,8 @@ def create_histogram(df: pd.DataFrame, column: str) -> None:
                 None
         '''
         logging.info(f"Creating histogram for feature: {column}")
-        output_path = f'./images/quant_{column}_histogram.png'
+        filename = f'quant_{column}_histogram.png'
+        output_path = os.path.join(output_dir, filename)
 
         plt.figure(figsize=(20, 10))
         df[column].hist()        
@@ -146,7 +157,9 @@ def create_histogram(df: pd.DataFrame, column: str) -> None:
         logging.info(f"Histogram for {column} saved in {output_path}.")
 
 
-def create_density_plot(df: pd.DataFrame, column: str) -> None:
+def create_density_plot(df: pd.DataFrame,
+                        column: str,
+                        output_dir: str = f'./images/') -> None:
         '''
         Helper function to create density plots for quantitative features.
         Input:
@@ -156,7 +169,8 @@ def create_density_plot(df: pd.DataFrame, column: str) -> None:
                 None
         '''
         logging.info(f"Plotting density for: {column}")
-        output_path = f'./images/quant_{column}_density_plot.png'
+        filename = f'quant_{column}_density_plot.png'
+        output_path = os.path.join(output_dir, filename)
 
         plt.figure(figsize=(20, 10))
         sns.histplot(df[column], stat='density', kde=True)
@@ -166,7 +180,8 @@ def create_density_plot(df: pd.DataFrame, column: str) -> None:
         logging.info(f"Density plot for {column} saved in {output_path}.")
 
 
-def create_heatmap(df: pd.DataFrame) -> None:
+def create_heatmap(df: pd.DataFrame,
+                   output_dir: str = f'./images/') -> None:
         '''
         Helper function to create a heatmap for the correlation matrix of the dataframe.
         Input:
@@ -175,7 +190,8 @@ def create_heatmap(df: pd.DataFrame) -> None:
                 None
         '''
         logging.info("Plotting correlation heatmap.")
-        output_path = './images/correlation_heatmap.png'
+        filename = 'correlation_heatmap.png'
+        output_path = os.path.join(output_dir, filename)
 
         plt.figure(figsize=(20, 10))
         corr = df.corr()
@@ -189,7 +205,8 @@ def create_heatmap(df: pd.DataFrame) -> None:
 def perform_eda(df: pd.DataFrame,                
                 cat_columns: list,
                 quant_columns: list,
-                target: str = 'Churn') -> None:
+                target: str = 'Churn',
+                output_dir: str = f'./images/') -> None:
     '''
     Perform EDA on df and save figures to images folder
     Input:
@@ -211,26 +228,26 @@ def perform_eda(df: pd.DataFrame,
 
     # Plotting target distribution
     logging.info("Plotting target distribution.")
-    create_target_dist_plot(df, target)
+    create_target_dist_plot(df, target, output_dir)
 
     # Bar plot categorical features
     logging.info("Plotting categorical features.")
-    for column in cat_columns:        
-        create_bar_plot(df, column)      
+    for column in cat_columns:
+        create_bar_plot(df, column, output_dir)
 
     # Histogram for quantitative features
     logging.info("Plotting quantitative features.")
     for column in quant_columns:
-        create_histogram(df, column)        
+        create_histogram(df, column, output_dir)
 
     # Density plot for quantitative features
     logging.info("Plotting density plots for quantitative features.")
     for column in quant_columns:
-        create_density_plot(df, column)
+        create_density_plot(df, column, output_dir)
 
     # Correlation heatmap
     logging.info("Creating correlation heatmap.")
-    create_heatmap(df)
+    create_heatmap(df, output_dir)
 
     logging.info("EDA performed successfully.")
     
@@ -323,7 +340,8 @@ def classification_report_image(y_train: np.ndarray,
                                 y_train_preds_lr: np.ndarray,
                                 y_train_preds_rf: np.ndarray,
                                 y_test_preds_lr: np.ndarray,
-                                y_test_preds_rf: np.ndarray) -> None:
+                                y_test_preds_rf: np.ndarray,
+                                output_dir: str='./images/') -> None:
     '''
     Produces classification report for training and testing results and stores report as image
     in images folder
@@ -340,6 +358,9 @@ def classification_report_image(y_train: np.ndarray,
     '''
     logging.info("Generating classification reports for training and testing data.")
     
+    filename_rf = 'rfc_classification_report.png'
+    save_path_rf = os.path.join(output_dir, filename_rf)
+
     # Random Forest Classifier
     # ----------------------------------------------
     logging.info("Random Forest Classifier")
@@ -354,7 +375,7 @@ def classification_report_image(y_train: np.ndarray,
 
     # Save the classification report as an image
     logging.info("Saving classification report for Random Forest Classifier.")
-    save_path_rf = './images/rfc_classification_report.png'
+        
     plt.savefig(save_path_rf)
     plt.close()
 
@@ -380,7 +401,7 @@ def classification_report_image(y_train: np.ndarray,
 
 def feature_importance_plot(model: sklearn.base.BaseEstimator,\
                             X_data: pd.DataFrame,\
-                            output_pth: str='./images/feature_importance.png') -> None:
+                            output_dir: str='./images/') -> None:
     '''
     Creates and stores the feature importances in pth
     Input:
@@ -391,6 +412,9 @@ def feature_importance_plot(model: sklearn.base.BaseEstimator,\
     Output:
              None
     '''
+    filename = 'feature_importance_rf.png'
+    output_pth = os.path.join(output_dir, filename)
+    
     # Calculate feature importances
     importances = model.feature_importances_
 
@@ -419,7 +443,13 @@ def feature_importance_plot(model: sklearn.base.BaseEstimator,\
     plt.close()
 
 
-def plot_roc_curve(model1, X, y, model2=None,alpha=0.8):
+def plot_roc_curve(model1,
+                   X,
+                   y,
+                   model2=None,
+                   alpha=0.8,                   
+                   ax=None,
+                   output_dir: str='./images/') -> None:
         '''
         Plots the ROC curve for a given model and dataset.
         Input:
@@ -431,12 +461,13 @@ def plot_roc_curve(model1, X, y, model2=None,alpha=0.8):
         Output:
                 None
         '''
-        
+
         model1_name = model1.__class__.__name__.lower()
         if model2 is None:
                 logging.info(f"Plotting ROC curve of model: {model1.__class__.__name__}")
-                output_path = f'./images/{model1_name}_roc_curve.png'
-        
+                filename = f'{model1_name}_roc_curve.png'
+                output_path = os.path.join(output_dir, filename)
+                        
                 plt.figure(figsize=(10, 5))        
                 plot_roc_curve(model1, X, y, alpha=alpha)
                 plt.title(f"ROC Curve - {model1_name}")
@@ -448,7 +479,8 @@ def plot_roc_curve(model1, X, y, model2=None,alpha=0.8):
         else:                
                 model2_name = model2.__class__.__name__.lower()
                 logging.info(f"Plotting ROC curves of models: {model1} and {model2}")
-                output_path = f'./images/{model1_name}_{model2_name}_roc_curve.png'
+                filename = f'{model1_name}_{model2_name}_roc_curve.png'
+                output_path = os.path.join(output_dir, filename)
 
                 plt.figure(figsize=(15, 8))
                 ax = plt.gca()
@@ -463,7 +495,9 @@ def plot_roc_curve(model1, X, y, model2=None,alpha=0.8):
 
 
 
-def shap_plot(model, X, output_path='./images/shap_summary_plot_rf.png'):
+def shap_plot(model,
+              X,
+              output_dir: str='./images/',):
         '''
         Creates a SHAP summary plot for the given model and data.
         Input:
@@ -473,17 +507,25 @@ def shap_plot(model, X, output_path='./images/shap_summary_plot_rf.png'):
         Output:
                 None
         '''
+        filename = 'shap_summary_plot_rf.png'
+        output_path = os.path.join(output_dir, filename)
+
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(X)
         plt.figure(figsize=(10, 5))
-        shap.summary_plot(shap_values, X_test, plot_type="bar")
+        shap.summary_plot(shap_values, X, plot_type="bar")
         plt.savefig(output_path)        
         plt.close()
         logging.info(f"SHAP summary plot for Random Forest Classifier saved in {shap_output_path}.")
 
 
 
-def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series) -> None:
+def train_models(X_train: np.ndarray,
+                 X_test: np.ndarray,
+                 y_train: np.ndarray,
+                 y_test: np.ndarray,
+                 output_dir_images: str='./images/',
+                 output_dir_models: str='./models/') -> None:
     '''
     Train, store model results: images + scores, and store models
     Input:
@@ -532,11 +574,15 @@ def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series
     # ----------------------------------------------
     logging.info("Storing trained models in the models directory.")
     
-    path_rc = './models/rfc_model.pkl'
+    filename_rc = 'rfc_model.pkl'
+    path_rc = os.path.join(output_dir_models, filename_rc)
+    
     joblib.dump(cv_rfc.best_estimator_, path_rc)
     logging.info(f"Random Forest Classifier model stored as '{path_rc}'")
+
+    filename_lr = 'logistic_model.pkl'
+    path_lr = os.path.join(output_dir_models, filename_lr)
     
-    path_lr = './models/logistic_model.pkl'
     joblib.dump(lrc, path_lr)
     logging.info(f"Logistic Regression model stored as '{path_lr}'")
 
@@ -567,7 +613,6 @@ def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series
     
     # ROC curve
     # ----------------------------------------------   
-
     # Plot ROC curve for Random Forest Classifer
     logging.info("Plotting ROC curve for Random Forest Classifier.")
     plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test)    
