@@ -452,14 +452,27 @@ def plot_roc_curve(model1, X, y, model2=None,alpha=0.8):
 
                 plt.figure(figsize=(15, 8))
                 ax = plt.gca()
-                model1_plot = plot_roc_curve(model1, X, y, ax=ax, alpha=alpha)
-                model2_plot = plot_roc_curve(model2, X, y, ax=ax, alpha=alpha)
+                plot_roc_curve(model1, X, y, ax=ax, alpha=alpha)
+                plot_roc_curve(model2, X, y, ax=ax, alpha=alpha)
                 plt.title(f"ROC Curve - {model1_name} vs {model2_name}")
                 plt.xlabel("False Positive Rate")
                 plt.ylabel("True Positive Rate")
                 plt.savefig(output_path)
                 plt.close()
                 logging.info(f"ROC curve for {model1_name} and {model2_name} saved in {output_path}.")  
+
+
+
+def shap_plot(model, X, output_path='./images/shap_summary_plot_rf.png'):
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(X)
+        plt.figure(figsize=(10, 5))
+        shap.summary_plot(shap_values, X_test, plot_type="bar")
+        plt.savefig(output_path)        
+        plt.close()
+        logging.info(f"SHAP summary plot for Random Forest Classifier saved in {shap_output_path}.")
+
+        return shap_values
 
 def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series) -> None:
     '''
@@ -531,9 +544,7 @@ def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series
     # Predict on training and testing data with Logistic Regression
     logging.info("Making predictions with Logistic Regression.")
     y_train_preds_lr = lrc.predict(X_train)
-    y_test_preds_lr = lrc.predict(X_test)
-
-    
+    y_test_preds_lr = lrc.predict(X_test)   
 
 
     # Classification report
@@ -569,27 +580,9 @@ def train_models(X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series
     logging.info("Detailed analyses for Random Forest Classifier.")
     
     # Tree Explainer
-    logging.info("Using SHAP Tree Explainer for Random Forest Classifier.")
-    plt.rc('figure', figsize=(10, 5))
-    
-    # Create SHAP explainer
-    def shap_plot(model, X, output_path='./images/shap_summary_plot_rf.png'):
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X)
-        plt.figure(figsize=(10, 5))
-        shap.summary_plot(shap_values, X_test, plot_type="bar")
-        plt.savefig(output_path)        
-        plt.close()
-        logging.info(f"SHAP summary plot for Random Forest Classifier saved in {shap_output_path}.")
-
-        return shap_values
-
-
-    logging.info("Calculating SHAP values for Random Forest Classifier.")    
-    explainer = shap.TreeExplainer(cv_rfc.best_estimator_)
-    shap_values = explainer.shap_values(X_test)
-    
-
+    logging.info("Using SHAP Tree Explainer for Random Forest Classifier.")    
+    shap_plot(cv_rfc.best_estimator_, X_test, output_path='./images/shap_summary_plot_rf.png')
+            
     # Feature importance plot    
     logging.info("Creating feature importance plot for Random Forest Classifier.")
     output_rf = './images/feature_importance_rf.png'
@@ -671,8 +664,9 @@ if __name__ == "__main__":
         keep_cols=features,
         response=target,
         target=target
-)
+   )
     
     # Train models
     train_models(X_train, X_test, y_train, y_test)
+    
     logging.info("Churn prediction pipeline completed successfully.")
