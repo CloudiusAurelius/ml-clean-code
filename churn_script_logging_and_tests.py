@@ -1,3 +1,11 @@
+"""
+# churn_script_logging_and_tests.py
+# Churn Prediction Model Testing
+# This script contains unit tests for the churn prediction model library.
+# It tests various functions including data import, feature engineering,
+# EDA, model training, and visualization functions.
+"""
+
 import os
 import logging
 import pytest
@@ -60,8 +68,7 @@ quant_columns = [
            'Avg_Utilization_Ratio'
 ]
 
-features = [
-			'Customer_Age',
+features = ['Customer_Age',
            'Dependent_count',
            'Months_on_book',
            'Total_Relationship_Count',
@@ -79,8 +86,7 @@ features = [
            'Education_Level_Churn',
            'Marital_Status_Churn', 
            'Income_Category_Churn',
-           'Card_Category_Churn'
-]  
+           'Card_Category_Churn']  
 
 
 def test_import():
@@ -100,6 +106,8 @@ def test_import():
 	except AssertionError as err:
 		logging.error("Testing import_data: The file doesn't appear to have rows and columns")
 		raise err
+	
+
 
 
 @pytest.fixture(scope='module')
@@ -137,7 +145,7 @@ def test_create_target(import_dataframe_fixture):
 	except AssertionError as err:
 		logging.error("Testing create_target: The target column 'churn' was not created")
 		raise err
-
+	
 
 def test_create_target_dist_plot(import_dataframe_fixture):
 	'''
@@ -159,6 +167,7 @@ def test_create_target_dist_plot(import_dataframe_fixture):
 	except AssertionError as err:
 		logging.error(f"Testing create_target_dist_plot: The plot was not saved to the specified path")
 		raise err
+
 
 
 def test_create_bar_plot(import_dataframe_fixture):
@@ -187,6 +196,7 @@ def test_create_bar_plot(import_dataframe_fixture):
 	except AssertionError as err:
 		logging.error(f"Testing create_bar_plot: The plot was not saved to the specified path")
 		raise err
+
 
 def test_create_histogram(import_dataframe_fixture):
 	'''
@@ -302,7 +312,7 @@ def test_perform_eda(import_dataframe_fixture):
 	except AssertionError as err:
 		logging.error(f"Testing perform_eda: {err}")
 		raise err
-		
+	
 
 def test_encoder_helper(import_dataframe_fixture):
 	'''
@@ -322,6 +332,7 @@ def test_encoder_helper(import_dataframe_fixture):
 	except AssertionError as err:
 		logging.error(f"Testing encoder_helper: {err}")
 		raise err
+	
 
 
 def test_perform_feature_engineering(import_dataframe_fixture):
@@ -385,6 +396,7 @@ def feature_engineering_fixture(import_dataframe_fixture):
 				target)
 	return X_train, X_test, y_train, y_test
 
+
 def test_classification_report_image(feature_engineering_fixture):
 	'''
 	test classification_report_image
@@ -415,6 +427,7 @@ def test_classification_report_image(feature_engineering_fixture):
 	except AssertionError as err:
 		logging.error(f"Testing classification_report_image: {err}")
 		raise err
+	
 
 
 def test_feature_importance_plot(feature_engineering_fixture):
@@ -445,6 +458,8 @@ def test_feature_importance_plot(feature_engineering_fixture):
 	except AssertionError as err:
 		logging.error(f"Testing feature_importance_plot: {err}")
 		raise err
+	
+
 
 def test_plot_roc_curve(feature_engineering_fixture):
 	'''
@@ -464,9 +479,10 @@ def test_plot_roc_curve(feature_engineering_fixture):
 	
 	try:
 		plot_roc_curve(
-			quick_model,
-			X_test,
-			y_test
+			model1=quick_model,
+			X=X_test,
+			y=y_test,
+			output_dir=output_dir
 		)
 		logging.info("Testing plot_roc_curve: SUCCESS")
 	except Exception as err:
@@ -520,9 +536,8 @@ def test_shap_plot(feature_engineering_fixture):
 		assert os.path.exists(test_path), f"File {filename} does not exist in {output_dir}"
 	except AssertionError as err:
 		logging.error(f"Testing shap_plot: {err}")
-		raise err	
-
-
+		raise err
+	
 
 def test_train_models(feature_engineering_fixture):
 	'''
@@ -533,15 +548,22 @@ def test_train_models(feature_engineering_fixture):
 	X_train, X_test, y_train, y_test = feature_engineering_fixture
 
 	output_dir_images_test = './tests/images/model_images/'
+	if not os.path.exists(output_dir_images_test):
+		os.makedirs(output_dir_images_test)
 	output_dir_models_test = './tests/models/'
+	if not os.path.exists(output_dir_models_test):
+		os.makedirs(output_dir_models_test)
 
 	try:
-		train_models(X_train,
-					 X_test,
-					 y_train,
-					 y_test,
-					 output_dir_images_test,
-					 output_dir_models_test)
+		train_models(
+			X_train=X_train,
+			X_test=X_test,
+			y_train=y_train,
+			y_test=y_test,
+			feature_names=features,
+            output_dir_images=output_dir_images_test,
+			output_dir_models=output_dir_models_test
+		)
 		success = 1
 		logging.info("Testing train_models: SUCCESS")
 	except Exception as err:
@@ -552,16 +574,24 @@ def test_train_models(feature_engineering_fixture):
 	except AssertionError as err:
 		logging.error(f"Testing train_models: {err}")
 		raise err
-	try:		
+	try:
 		filename_rf = 'rfc_classification_report.png'
 		test_path_rf = os.path.join(output_dir_images_test, filename_rf)
 		assert os.path.exists(test_path_rf), f"File {filename_rf} does not exist in {output_dir_images_test}"
-		
-		filename_lr = 'logistic_classification_report.png'
+
+		filename_lr = 'lc_classification_report.png'
 		test_path_lr = os.path.join(output_dir_images_test, filename_lr)
 		assert os.path.exists(test_path_lr), f"File {filename_lr} does not exist in {output_dir_images_test}"
 
-		filename_roc_curve = 'DummyClassifier_roc_curve.png'
+		filename_roc_curve = 'randomforestclassifier_roc_curve.png'
+		test_path_roc_curve = os.path.join(output_dir_images_test, filename_roc_curve)
+		assert os.path.exists(test_path_roc_curve), f"File {filename_roc_curve} does not exist in {output_dir_images_test}"
+
+		filename_roc_curve = 'logisticregression_roc_curve.png'
+		test_path_roc_curve = os.path.join(output_dir_images_test, filename_roc_curve)
+		assert os.path.exists(test_path_roc_curve), f"File {filename_roc_curve} does not exist in {output_dir_images_test}"
+
+		filename_roc_curve = 'randomforestclassifier_logisticregression_roc_curve.png'
 		test_path_roc_curve = os.path.join(output_dir_images_test, filename_roc_curve)
 		assert os.path.exists(test_path_roc_curve), f"File {filename_roc_curve} does not exist in {output_dir_images_test}"
 
@@ -589,20 +619,20 @@ def test_train_models(feature_engineering_fixture):
 
 if __name__ == "__main__":
 	test_import()
-	#test_create_target()
-	#test_create_target_dist_plot()
-	#test_create_bar_plot()
-	#test_create_histogram()
-	#test_create_density_plot()
-	#test_create_heatmap()
-	#test_perform_eda()
-	#test_encoder_helper()
-	#test_perform_feature_engineering()
-	#test_classification_report_image()
-	#test_feature_importance_plot()
-	#test_plot_roc_curve()
-	#test_shap_plot()
-	#test_train_models()
+	test_create_target()
+	test_create_target_dist_plot()
+	test_create_bar_plot()
+	test_create_histogram()
+	test_create_density_plot()
+	test_create_heatmap()
+	test_perform_eda()
+	test_encoder_helper()
+	test_perform_feature_engineering()
+	test_classification_report_image()
+	test_feature_importance_plot()
+	test_plot_roc_curve()
+	test_shap_plot()
+	test_train_models()
 
 
 

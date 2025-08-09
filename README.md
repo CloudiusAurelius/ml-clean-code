@@ -3,7 +3,7 @@
 - Project **Predict Customer Churn** of ML DevOps Engineer Nanodegree Udacity
 
 ## Project Description
-Your project description here.
+This project aims to predict customer churn using machine learning techniques, focusing on clean code practices and modular design. The goal is to refactor existing code for improved readability, maintainability, and testability, while building a robust pipeline for data processing, model training, evaluation, and deployment. Expected outcomes include a well-documented codebase, automated testing, and reproducible results for customer churn prediction.
 
 ## Files and data description
 Overview of the files and data present in the root directory. 
@@ -36,6 +36,11 @@ Overview of the files and data present in the root directory.
 
 ## Running Files
 
+- Run the churn prediction pipeline with:
+```Bash
+python churn_library.py
+``` 
+
 - Run tests with: 
 ```Bash
 pytest churn_script_logging_and_tests.py
@@ -51,7 +56,7 @@ pytest churn_script_logging_and_tests.py --pdb
     
 
 ### Setting up the environment
-The file `environment.yaml` was created based on `requirements_py3.10.txt`
+The file `environment.yml` was created based on `requirements_py3.10.txt`
 
 Create and activate the environment:
 ```bash
