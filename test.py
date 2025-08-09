@@ -1,0 +1,8 @@
+cat_columns=[
+            'Gender',
+            'Education_Level',
+            'Marital_Status',
+            'Income_Category',
+            'Card_Category'
+]
+

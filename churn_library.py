@@ -23,7 +23,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import plot_roc_curve, classification_report
+#from sklearn.metrics import plot_roc_curve, classification_report
+from sklearn.metrics import RocCurveDisplay, classification_report
+import sklearn.base
 
 
 
@@ -117,7 +119,7 @@ def create_bar_plot(df: pd.DataFrame,
     Helper function to create bar plots for categorical features.
     Input:
         df: pandas dataframe
-        column: name of the categorical column to plot
+        column: str name of the categorical column to plot
     Output:
         None
     '''
@@ -127,7 +129,7 @@ def create_bar_plot(df: pd.DataFrame,
 
     plt.figure(figsize=(20, 10))
     df[column]\
-        .value_counts('normalize')\
+        .value_counts(normalize=True)\
         .plot(kind='bar', title=column)
     plt.savefig(output_path)
     plt.close()
@@ -189,12 +191,17 @@ def create_heatmap(df: pd.DataFrame,
         Output:
                 None
         '''
+        # Define paths
         logging.info("Plotting correlation heatmap.")
         filename = 'correlation_heatmap.png'
         output_path = os.path.join(output_dir, filename)
 
+        # Select data: numeric columns only
+        numeric_df = df.select_dtypes(include=['number'])
+
+        # Plot the heatmap
         plt.figure(figsize=(20, 10))
-        corr = df.corr()
+        corr = numeric_df.corr()
         sns.heatmap(corr, annot=False, cmap='Dark2_r', linewidths=2)
         plt.title("Correlation Heatmap")
         plt.savefig(output_path)
@@ -254,9 +261,9 @@ def perform_eda(df: pd.DataFrame,
     
 
 
-def encoder_helper(df: pd.DataFrame,\
-                   category_lst: list,\
-                   target: str='Churn',\
+def encoder_helper(df: pd.DataFrame,
+                   category_lst: list,
+                   target: str='Churn',
                    response: str='Churn') -> pd.DataFrame:
     '''
     Helper function to turn each categorical column into a new column with
@@ -280,16 +287,17 @@ def encoder_helper(df: pd.DataFrame,\
 
     for category in category_lst:
             logging.info(f"Encoding category: {category}")             
-            
-            # Calculate the proportion of churn for each category
-            churn_proportions = df.groupby(category).mean()[target]
-            
+                       
             # Create a new column with the churn proportions
             new_col_name = f"{category}_{col_suffix}"
             logging.info(f"Creating new column: {new_col_name}")
-            df[new_col_name] = df[category].map(churn_proportions)
+            df[new_col_name] = df\
+                               .groupby(category)[target]\
+                               .transform('mean')
             logging.info(f"Encoded {category} with churn proportions\
                          in column: {new_col_name}")
+
+    return df
 
 
 def perform_feature_engineering(df: pd.DataFrame,\
@@ -315,7 +323,7 @@ def perform_feature_engineering(df: pd.DataFrame,\
     y = df[target].values
 
     logging.info(f"Features shape: {X.shape}, Target shape: {y.shape}")
-    logging.info(f"Features preview:\n{X.head()}")
+    logging.info(f"Features preview:\n{X[0:5]}")
 
     # Split the data into training and testing sets        
     X_train,\
@@ -358,19 +366,20 @@ def classification_report_image(y_train: np.ndarray,
     '''
     logging.info("Generating classification reports for training and testing data.")
     
-    filename_rf = 'rfc_classification_report.png'
-    save_path_rf = os.path.join(output_dir, filename_rf)
 
     # Random Forest Classifier
     # ----------------------------------------------
     logging.info("Random Forest Classifier")
 
+    filename_rf = 'rfc_classification_report.png'
+    save_path_rf = os.path.join(output_dir, filename_rf)
+
     # Generate classification report
     plt.rc('figure', figsize=(5, 5))
     plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')    
+    plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')    
     plt.axis('off')
 
     # Save the classification report as an image
@@ -382,31 +391,33 @@ def classification_report_image(y_train: np.ndarray,
     # Logistic Regression Classifier
     # ----------------------------------------------    
     logging.info("Logistic Regression Classifier")
-    
+
+    filename_lr = 'lc_classification_report.png'
+    save_path_lr = os.path.join(output_dir, filename_lr)
+
     # Generate classification report
     plt.rc('figure', figsize=(5, 5))
     plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.7, str(classification_report(y_train, y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
-    plt.text(0.01, 0.05, str(classification_report(y_test, y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace')
+    plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace')
     plt.axis('off')
 
     # Save the classification report as an image
     logging.info("Saving classification report for Logistic Regression Classifier.")
-    save_path_lr = './images/lrc_classification_report.png'
     plt.savefig(save_path_lr)
     plt.close()
     
 
 
-def feature_importance_plot(model: sklearn.base.BaseEstimator,\
-                            X_data: pd.DataFrame,\
+def feature_importance_plot(model: sklearn.base.BaseEstimator,
+                            feature_names: list,
                             output_dir: str='./images/') -> None:
     '''
     Creates and stores the feature importances in pth
     Input:
             model: model object containing feature_importances_
-            X_data: pandas dataframe of X values
+            feature_names: list of feature names
             output_pth: path to store the figure
 
     Output:
@@ -422,7 +433,8 @@ def feature_importance_plot(model: sklearn.base.BaseEstimator,\
     indices = np.argsort(importances)[::-1]
 
     # Rearrange feature names so they match the sorted feature importances
-    names = [X_data.columns[i] for i in indices]
+    #names = [X_df.columns[i] for i in indices]
+    names = [feature_names[i] for i in indices]
 
     # Create plot
     plt.figure(figsize=(20,5))
@@ -432,10 +444,12 @@ def feature_importance_plot(model: sklearn.base.BaseEstimator,\
     plt.ylabel('Importance')
 
     # Add bars
-    plt.bar(range(X_data.shape[1]), importances[indices])
+    # plt.bar(range(X_df.shape[1]), importances[indices])
+    plt.bar(range(len(feature_names)), importances[indices])
 
     # Add feature names as x-axis labels
-    plt.xticks(range(X_data.shape[1]), names, rotation=90)
+    #plt.xticks(range(X_df.shape[1]), names, rotation=90)
+    plt.xticks(range(len(feature_names)), names, rotation=90)
 
     # save the plot
     logging.info(f"Saving feature importance plot to {output_pth}")
@@ -469,7 +483,8 @@ def plot_roc_curve(model1,
                 output_path = os.path.join(output_dir, filename)
                         
                 plt.figure(figsize=(10, 5))        
-                plot_roc_curve(model1, X, y, alpha=alpha)
+                #plot_roc_curve(model1, X, y, alpha=alpha)
+                RocCurveDisplay.from_estimator(model1, X, y, alpha=alpha).plot()
                 plt.title(f"ROC Curve - {model1_name}")
                 plt.xlabel("False Positive Rate")
                 plt.ylabel("True Positive Rate")
@@ -483,9 +498,9 @@ def plot_roc_curve(model1,
                 output_path = os.path.join(output_dir, filename)
 
                 plt.figure(figsize=(15, 8))
-                ax = plt.gca()
-                plot_roc_curve(model1, X, y, ax=ax, alpha=alpha)
-                plot_roc_curve(model2, X, y, ax=ax, alpha=alpha)
+                ax = plt.gca()                
+                RocCurveDisplay.from_estimator(model1, X, y, alpha=alpha).plot()
+                RocCurveDisplay.from_estimator(model2, X, y, alpha=alpha).plot()
                 plt.title(f"ROC Curve - {model1_name} vs {model2_name}")
                 plt.xlabel("False Positive Rate")
                 plt.ylabel("True Positive Rate")
@@ -495,28 +510,36 @@ def plot_roc_curve(model1,
 
 
 
-def shap_plot(model,
-              X,
-              output_dir: str='./images/',):
-        '''
-        Creates a SHAP summary plot for the given model and data.
-        Input:
-                model: trained model
-                X: feature data
-                output_path: path to save the SHAP summary plot
-        Output:
-                None
-        '''
-        filename = 'shap_summary_plot_rf.png'
-        output_path = os.path.join(output_dir, filename)
-
-        explainer = shap.TreeExplainer(model)
-        shap_values = explainer.shap_values(X)
-        plt.figure(figsize=(10, 5))
-        shap.summary_plot(shap_values, X, plot_type="bar")
-        plt.savefig(output_path)        
-        plt.close()
-        logging.info(f"SHAP summary plot for Random Forest Classifier saved in {shap_output_path}.")
+def shap_plot(model: sklearn.base.BaseEstimator,
+              X: np.ndarray,
+              feature_names: list,
+              output_dir: str = './images/') -> None:
+    '''
+    Creates a SHAP summary plot for the given model and data.
+    Input:
+        model: trained model
+        X: feature data
+        feature_names: list of feature names
+        output_dir: directory to save the SHAP summary plot
+    Output:
+        None
+    '''
+    filename = 'shap_summary_plot_rf.png'
+    output_path = os.path.join(output_dir, filename)
+    
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X)
+    shap.summary_plot(
+        shap_values[:, :, 1],
+        X,
+        feature_names,
+        plot_type="bar",
+        show=False
+    )
+    plt.savefig(output_path)
+    plt.close('all')
+    logging.info(f"SHAP summary plot for Random Forest Classifier saved in {output_path}.")
+        
 
 
 
@@ -524,6 +547,7 @@ def train_models(X_train: np.ndarray,
                  X_test: np.ndarray,
                  y_train: np.ndarray,
                  y_test: np.ndarray,
+                 feature_names: list=None,
                  output_dir_images: str='./images/',
                  output_dir_models: str='./models/') -> None:
     '''
@@ -604,29 +628,44 @@ def train_models(X_train: np.ndarray,
 
     # Classification report
     # ----------------------------------------------    
-    classification_report_image(y_train,\
-        y_test,\
-        y_train_preds_lr,\
-        y_train_preds_rf,\
-        y_test_preds_lr,\
-        y_test_preds_rf)
+    classification_report_image(y_train,
+        y_test,
+        y_train_preds_lr,
+        y_train_preds_rf,
+        y_test_preds_lr,
+        y_test_preds_rf,
+        output_dir_images
+  )
     
     # ROC curve
     # ----------------------------------------------   
     # Plot ROC curve for Random Forest Classifer
     logging.info("Plotting ROC curve for Random Forest Classifier.")
-    plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test)    
+    plot_roc_curve(
+         model1=cv_rfc.best_estimator_,
+         X=X_test,
+         y=y_test,
+         output_dir=output_dir_images
+    )
 
     # Plot ROC curve for Logistic Regression
     logging.info("Plotting ROC curve for Logistic Regression.")
-    plot_roc_curve(cv_rfc.best_estimator_, X_test, y_test)    
+    plot_roc_curve(
+         model1=lrc,
+         X=X_test,
+         y=y_test,
+         output_dir=output_dir_images
+    )
 
     # Combined ROC curve
     logging.info("Plotting combined ROC curve for both models.")
-    plot_roc_curve(model1=cv_rfc.best_estimator_,\
-                   X=X_test,\
-                   y=y_test,\
-                   model2=lrc)
+    plot_roc_curve(
+         model1=cv_rfc.best_estimator_,
+         X=X_test,
+         y=y_test,
+         model2=lrc,
+         output_dir=output_dir_images
+    )
     
 
     # Detailed Analyses for Random Forest Classifier
@@ -635,12 +674,20 @@ def train_models(X_train: np.ndarray,
     
     # Tree Explainer
     logging.info("Using SHAP Tree Explainer for Random Forest Classifier.")    
-    shap_plot(cv_rfc.best_estimator_, X_test, output_path='./images/shap_summary_plot_rf.png')
+    shap_plot(
+         cv_rfc.best_estimator_,
+         X_test,
+         feature_names,
+         output_dir_images
+    )
             
     # Feature importance plot    
-    logging.info("Creating feature importance plot for Random Forest Classifier.")
-    output_rf = './images/feature_importance_rf.png'
-    feature_importance_plot(cv_rfc.best_estimator_, X_train, output_rf)
+    logging.info("Creating feature importance plot for Random Forest Classifier.")    
+    feature_importance_plot(
+         cv_rfc.best_estimator_,
+         feature_names,
+         output_dir_images
+    )
     
 
 if __name__ == "__main__":
@@ -652,7 +699,7 @@ if __name__ == "__main__":
             'Marital_Status',
             'Income_Category',
             'Card_Category'
-    ],
+    ]
     quant_columns = [
            'Customer_Age',
            'Dependent_count', 
@@ -705,9 +752,9 @@ if __name__ == "__main__":
     )
 
     # Encode categorical features
-    df=encoder_helper(df=df,\
-                      category_lst=cat_columns,\
-                      target=target,\
+    df=encoder_helper(df=df,
+                      category_lst=cat_columns,
+                      target=target,
                       response=target)
 
     # Perform feature engineering
