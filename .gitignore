@@ -215,3 +215,4 @@ images/
 models/
 logs/
 data/
+*.zip
