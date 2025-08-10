@@ -210,3 +210,8 @@ __marimo__/
 # Custom files
 _Archive/
 readme_save.md
+tests/
+images/
+models/
+logs/
+data/

@@ -673,22 +673,3 @@ def test_train_models(feature_engineering_fixture):
         logger.error("Testing train_models: %s", err)
         raise err
 
-
-if __name__ == "__main__":
-    logger.info("Starting tests for churn prediction library")
-    # Run all tests
-    test_import()
-    test_create_target()
-    test_create_target_dist_plot()
-    test_create_bar_plot()
-    test_create_histogram()
-    test_create_density_plot()
-    test_create_heatmap()
-    test_perform_eda()
-    test_encoder_helper()
-    test_perform_feature_engineering()
-    test_classification_report_image()
-    test_feature_importance_plot()
-    test_plot_roc_curve()
-    test_shap_plot()
-    test_train_models()
