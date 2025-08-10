@@ -30,12 +30,41 @@ import sklearn.base
 
 
 # Set up logging
+"""
 logging.basicConfig(
-    filename='./logs/test_results.log',
+    filename='./logs/pipeline_results.log',
     level=logging.INFO,
     filemode='w',
     format='%(name)s - %(levelname)s - %(message)s')
+"""
 
+def setup_logging():
+     """
+     Set up logging configuration.
+     """
+     # Adding a file handler
+     file_handler = logging.FileHandler('./logs/pipeline_results.log')
+     file_handler.setLevel(logging.INFO)
+     file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+     # Attach the handler to the logger
+     logger = logging.getLogger()
+     logger.addHandler(file_handler)
+     return logger
+     
+# Initialize logger
+logger = setup_logging()
+
+"""
+# Adding a file handler
+file_handler = logging.FileHandler('./logs/pipeline_results.log')
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+
+# Attach the handler to the logger
+logger = logging.getLogger()
+logger.addHandler(file_handler)
+"""
 
 def import_data(pth: str) -> pd.DataFrame:
     '''
@@ -373,6 +402,8 @@ def classification_report_image(y_train: np.ndarray,
 
     filename_rf = 'rfc_classification_report.png'
     save_path_rf = os.path.join(output_dir, filename_rf)
+    
+    logging.info("Generating and saving classification report for Random Forest Classifier.")
 
     # Generate classification report
     plt.rc('figure', figsize=(5, 5))
@@ -380,11 +411,10 @@ def classification_report_image(y_train: np.ndarray,
     plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')    
-    plt.axis('off')
+    plt.axis('off')    
+    plt.xlim(0, 1) #
+    plt.ylim(0, 1.3) #
 
-    # Save the classification report as an image
-    logging.info("Saving classification report for Random Forest Classifier.")
-        
     plt.savefig(save_path_rf)
     plt.close()
 
@@ -482,8 +512,7 @@ def plot_roc_curve(model1,
                 filename = f'{model1_name}_roc_curve.png'
                 output_path = os.path.join(output_dir, filename)
                         
-                plt.figure(figsize=(10, 5))        
-                #plot_roc_curve(model1, X, y, alpha=alpha)
+                plt.figure(figsize=(10, 5))                        
                 RocCurveDisplay.from_estimator(model1, X, y, alpha=alpha).plot()
                 plt.title(f"ROC Curve - {model1_name}")
                 plt.xlabel("False Positive Rate")
@@ -497,10 +526,23 @@ def plot_roc_curve(model1,
                 filename = f'{model1_name}_{model2_name}_roc_curve.png'
                 output_path = os.path.join(output_dir, filename)
 
+                m1_plot = RocCurveDisplay\
+                          .from_estimator(
+                               model1, X, y,
+                               ax=ax, alpha=alpha
+                          )
+                #.plot()
+                
                 plt.figure(figsize=(15, 8))
                 ax = plt.gca()                
-                RocCurveDisplay.from_estimator(model1, X, y, alpha=alpha).plot()
-                RocCurveDisplay.from_estimator(model2, X, y, alpha=alpha).plot()
+                m2_plot = RocCurveDisplay\
+                         .from_estimator(
+                              model2, X, y,
+                              ax=ax, alpha=alpha,
+                              label=model2_name
+                         )\
+                         .plot()
+                m1_plot.plot(ax=ax, alpha=alpha, label=model1_name)
                 plt.title(f"ROC Curve - {model1_name} vs {model2_name}")
                 plt.xlabel("False Positive Rate")
                 plt.ylabel("True Positive Rate")
@@ -527,14 +569,14 @@ def shap_plot(model: sklearn.base.BaseEstimator,
     filename = 'shap_summary_plot_rf.png'
     output_path = os.path.join(output_dir, filename)
     
+    plt.figure(figsize=(10, 5))
     explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X)
+    shap_values = explainer.shap_values(X)    
     shap.summary_plot(
         shap_values[:, :, 1],
         X,
         feature_names,
-        plot_type="bar",
-        show=False
+        plot_type="bar"
     )
     plt.savefig(output_path)
     plt.close('all')
@@ -566,7 +608,7 @@ def train_models(X_train: np.ndarray,
     logging.info("Defining parameter grid for Grid Search.")
     param_grid = { 
         'n_estimators': [200, 500],
-        'max_features': ['auto', 'sqrt'],
+        'max_features': ['sqrt', 'log2'],
         'max_depth' : [4,5,100],
         'criterion' :['gini', 'entropy']
     }
@@ -582,12 +624,16 @@ def train_models(X_train: np.ndarray,
 
     # Fit the Random Forest model
     logging.info("Fitting Random Forest Classifier.")
-    cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
+    cv_rfc = GridSearchCV(
+         estimator=rfc,
+         param_grid=param_grid,
+         cv=5
+    )    
     cv_rfc.fit(X_train, y_train)
 
     # Logistic Regression
     logging.info("Initializing Logistic Regression.")
-    lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
+    lrc = LogisticRegression(solver='lbfgs', max_iter=5000)
 
     # Fit the Logistic Regression model
     logging.info("Fitting Logistic Regression.")
@@ -738,7 +784,7 @@ if __name__ == "__main__":
            'Card_Category_Churn']  
 
     # Import data
-    data_path = 'data/churn_data.csv'
+    data_path = 'data/bank_data.csv'
     df = import_data(data_path)
 
     # Create target column
@@ -752,22 +798,30 @@ if __name__ == "__main__":
     )
 
     # Encode categorical features
-    df=encoder_helper(df=df,
-                      category_lst=cat_columns,
-                      target=target,
-                      response=target)
+    df=encoder_helper(
+         df=df,
+         category_lst=cat_columns,
+         target=target,
+         response=target
+    )
 
     # Perform feature engineering
     X_train,\
     X_test,\
     y_train,\
-    y_test = perform_feature_engineering(df,
-        keep_cols=features,
-        response=target,
+    y_test = perform_feature_engineering(
+        df,
+        keep_cols=features,        
         target=target
-   )
+    )
     
     # Train models
-    train_models(X_train, X_test, y_train, y_test)
+    train_models(
+         X_train=X_train,
+         X_test=X_test,
+         y_train=y_train,
+         y_test=y_test,
+         feature_names=features
+    )
     
     logging.info("Churn prediction pipeline completed successfully.")

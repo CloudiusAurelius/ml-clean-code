@@ -28,11 +28,29 @@ from churn_library import import_data,\
                           shap_plot,\
                           train_models
 
-logging.basicConfig(
-    filename='./logs/churn_library_tests.log',
-    level = logging.INFO,
-    filemode='w',
-    format='%(name)s - %(levelname)s - %(message)s')
+
+# Set up logging
+def setup_logging(
+        filename,
+        format='%(asctime)s - %(levelname)s - %(message)s'):
+    """
+    Set up logging configuration.
+    """
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    # Adding a file handler
+    file_handler = logging.FileHandler(filename)
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(logging.Formatter(format))
+
+    # Attach the handler to the logger
+    logger.addHandler(file_handler)
+
+    return logger
+
+logger = setup_logging(filename='./logs/test_log.log')
+
 
 # Define variables
 global output_dir
@@ -93,18 +111,18 @@ def test_import():
 	'''
 	test data import - this example is completed for you to assist with the other test functions
 	'''
-	logging.info("Testing import_data function")
+	logger.info("Testing import_data function")
 	try:
 		df = import_data("./data/bank_data.csv")
-		logging.info("Testing import_data: SUCCESS")
+		logger.info("Testing import_data: SUCCESS")
 	except FileNotFoundError as err:
-		logging.error("Testing import_eda: The file wasn't found")
+		logger.error("Testing import_eda: The file wasn't found")
 		raise err
 	try:
 		assert df.shape[0] > 0
 		assert df.shape[1] > 0
 	except AssertionError as err:
-		logging.error("Testing import_data: The file doesn't appear to have rows and columns")
+		logger.error("Testing import_data: The file doesn't appear to have rows and columns")
 		raise err
 	
 
@@ -128,22 +146,22 @@ def test_create_target(import_dataframe_fixture):
 	'''
 	test create_target function
 	'''
-	logging.info("Testing create_target function")
+	logger.info("Testing create_target function")
 	df = import_dataframe_fixture
 
 	if df is None:
-		logging.error("Testing create_target: DataFrame is None")
+		logger.error("Testing create_target: DataFrame is None")
 		raise ValueError("DataFrame is None")	
 	try:
 		df = create_target(df)
-		logging.info("Testing create_target: SUCCESS")
+		logger.info("Testing create_target: SUCCESS")
 	except FileNotFoundError as err:
-		logging.error("Testing create_target: The file wasn't found")
+		logger.error("Testing create_target: The file wasn't found")
 		raise err
 	try:
 		assert 'Churn' in df.columns
 	except AssertionError as err:
-		logging.error("Testing create_target: The target column 'churn' was not created")
+		logger.error("Testing create_target: The target column 'churn' was not created")
 		raise err
 	
 
@@ -151,21 +169,21 @@ def test_create_target_dist_plot(import_dataframe_fixture):
 	'''
 	test create_target_dist_plot function
 	'''
-	logging.info("Testing create_target_dist_plot function")
+	logger.info("Testing create_target_dist_plot function")
 	df = import_dataframe_fixture	
 	filename = f'{target}_histogram.png'
 	test_path = os.path.join(output_dir, filename)
 
 	try:
 		create_target_dist_plot(df, target, output_dir)
-		logging.info("Testing create_target_dist_plot: SUCCESS")
+		logger.info("Testing create_target_dist_plot: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing create_target_dist_plot: {err}")
+		logger.error(f"Testing create_target_dist_plot: {err}")
 		raise err
 	try:
 		assert os.path.exists(test_path)
 	except AssertionError as err:
-		logging.error(f"Testing create_target_dist_plot: The plot was not saved to the specified path")
+		logger.error(f"Testing create_target_dist_plot: The plot was not saved to the specified path")
 		raise err
 
 
@@ -174,7 +192,7 @@ def test_create_bar_plot(import_dataframe_fixture):
 	'''
 	test create_bar_plot function
 	'''
-	logging.info("Testing create_bar_plot function")
+	logger.info("Testing create_bar_plot function")
 	df = import_dataframe_fixture
 	test_column = cat_columns[0]  # Use the first categorical column for testing
 	
@@ -183,18 +201,18 @@ def test_create_bar_plot(import_dataframe_fixture):
 	try:
 		assert isinstance(test_column, str)
 	except AssertionError as err:
-		logging.error(f"Testing create_bar_plot: The column name is not a string")
+		logger.error(f"Testing create_bar_plot: The column name is not a string")
 		raise err
 	try:
 		create_bar_plot(df, test_column, output_dir)
-		logging.info("Testing create_bar_plot: SUCCESS")
+		logger.info("Testing create_bar_plot: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing create_bar_plot: {err}")
+		logger.error(f"Testing create_bar_plot: {err}")
 		raise err
 	try:
 		assert os.path.exists(test_path)
 	except AssertionError as err:
-		logging.error(f"Testing create_bar_plot: The plot was not saved to the specified path")
+		logger.error(f"Testing create_bar_plot: The plot was not saved to the specified path")
 		raise err
 
 
@@ -202,7 +220,7 @@ def test_create_histogram(import_dataframe_fixture):
 	'''
 	test create_histogram function
 	'''
-	logging.info("Testing create_histogram function")
+	logger.info("Testing create_histogram function")
 	df = import_dataframe_fixture
 	test_column = quant_columns[0]  # Use the first quantitative column for testing
     
@@ -211,14 +229,14 @@ def test_create_histogram(import_dataframe_fixture):
 	
 	try:
 		create_histogram(df, test_column, output_dir)
-		logging.info("Testing create_histogram: SUCCESS")
+		logger.info("Testing create_histogram: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing create_histogram: {err}")
+		logger.error(f"Testing create_histogram: {err}")
 		raise err
 	try:
 		assert os.path.exists(test_path)
 	except AssertionError as err:
-		logging.error(f"Testing create_histogram: The plot was not saved to the specified path")
+		logger.error(f"Testing create_histogram: The plot was not saved to the specified path")
 		raise err
 	
 
@@ -226,7 +244,7 @@ def test_create_density_plot(import_dataframe_fixture):
 	'''
 	test create_density_plot function
 	'''
-	logging.info("Testing create_density_plot function")
+	logger.info("Testing create_density_plot function")
 	df = import_dataframe_fixture
 	test_column = quant_columns[0]  # Use the first quantitative column for testing
 	
@@ -235,35 +253,35 @@ def test_create_density_plot(import_dataframe_fixture):
 	
 	try:
 		create_density_plot(df, test_column, output_dir)
-		logging.info("Testing create_density_plot: SUCCESS")
+		logger.info("Testing create_density_plot: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing create_density_plot: {err}")
+		logger.error(f"Testing create_density_plot: {err}")
 		raise err
 	try:
 		assert os.path.exists(test_path)
 	except AssertionError as err:
-		logging.error(f"Testing create_density_plot: The plot was not saved to the specified path")
+		logger.error(f"Testing create_density_plot: The plot was not saved to the specified path")
 		raise err
 
 def test_create_heatmap(import_dataframe_fixture):
 	'''
 	test create_heatmap function
 	'''
-	logging.info("Testing create_heatmap function")
+	logger.info("Testing create_heatmap function")
 	df = import_dataframe_fixture
 	filename = 'correlation_heatmap.png'
 	test_path = os.path.join(output_dir, filename)
 
 	try:
 		create_heatmap(df, output_dir)
-		logging.info("Testing create_heatmap: SUCCESS")
+		logger.info("Testing create_heatmap: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing create_heatmap: {err}")
+		logger.error(f"Testing create_heatmap: {err}")
 		raise err
 	try:
 		assert os.path.exists(test_path)
 	except AssertionError as err:
-		logging.error(f"Testing create_heatmap: The heatmap was not saved to the specified path")
+		logger.error(f"Testing create_heatmap: The heatmap was not saved to the specified path")
 		raise err
 
 
@@ -271,7 +289,7 @@ def test_perform_eda(import_dataframe_fixture):
 	'''
 	test perform eda function
 	'''
-	logging.info("Testing perform_eda function")
+	logger.info("Testing perform_eda function")
 	df = import_dataframe_fixture
 	output_dir_eda = './tests/images/eda_images/'
 	if not os.path.exists(output_dir_eda):
@@ -284,14 +302,14 @@ def test_perform_eda(import_dataframe_fixture):
 					target,
 					output_dir_eda)
 		success = 1
-		logging.info("Testing perform_eda: SUCCESS")
+		logger.info("Testing perform_eda: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing perform_eda: {err}")
+		logger.error(f"Testing perform_eda: {err}")
 		raise err
 	try:
 		assert success == 1
 	except AssertionError as err:
-		logging.error(f"Testing perform_eda: The EDA function did not complete successfully")
+		logger.error(f"Testing perform_eda: The EDA function did not complete successfully")
 		raise err
 	try:
 		# check if *.png files exist in the output directory
@@ -310,7 +328,7 @@ def test_perform_eda(import_dataframe_fixture):
 		test_path = os.path.join(output_dir_eda, filename)
 		assert os.path.exists(test_path), f"File {filename} does not exist in {output_dir_eda}"
 	except AssertionError as err:
-		logging.error(f"Testing perform_eda: {err}")
+		logger.error(f"Testing perform_eda: {err}")
 		raise err
 	
 
@@ -318,19 +336,19 @@ def test_encoder_helper(import_dataframe_fixture):
 	'''
 	test encoder helper
 	'''
-	logging.info("Testing encoder_helper function")
+	logger.info("Testing encoder_helper function")
 	df = import_dataframe_fixture
 	try:
 		encoded_df = encoder_helper(df, cat_columns, target)
-		logging.info("Testing encoder_helper: SUCCESS")
+		logger.info("Testing encoder_helper: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing encoder_helper: {err}")
+		logger.error(f"Testing encoder_helper: {err}")
 		raise err
 	try:
 		assert all(f"{col}_Churn" in encoded_df.columns for col in cat_columns),\
 			"Not all categorical columns were encoded correctly"
 	except AssertionError as err:
-		logging.error(f"Testing encoder_helper: {err}")
+		logger.error(f"Testing encoder_helper: {err}")
 		raise err
 	
 
@@ -339,7 +357,7 @@ def test_perform_feature_engineering(import_dataframe_fixture):
 	'''
 	test perform_feature_engineering
 	'''
-	logging.info("Testing perform_feature_engineering function")
+	logger.info("Testing perform_feature_engineering function")
 	df = import_dataframe_fixture
 	try:
 		X_train,\
@@ -348,19 +366,19 @@ def test_perform_feature_engineering(import_dataframe_fixture):
 		y_test = perform_feature_engineering(df,
 			features,
 			target)
-		logging.info("Testing perform_feature_engineering: SUCCESS")
+		logger.info("Testing perform_feature_engineering: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing perform_feature_engineering: {err}")
+		logger.error(f"Testing perform_feature_engineering: {err}")
 		raise err
 	try:
 		assert len(X_train) > 0 and len(X_test) > 0, "Training and test sets are empty"
 	except AssertionError as err:
-		logging.error(f"Testing perform_feature_engineering: {err}")
+		logger.error(f"Testing perform_feature_engineering: {err}")
 		raise err
 	try:
 		assert len(y_train) > 0 and len(y_test) > 0, "Training and test labels are empty"
 	except AssertionError as err:
-		logging.error(f"Testing perform_feature_engineering: {err}")
+		logger.error(f"Testing perform_feature_engineering: {err}")
 		raise err
 	try:
 		assert X_train.shape[1] == len(features), "X_train does not have the correct number of features"
@@ -369,7 +387,7 @@ def test_perform_feature_engineering(import_dataframe_fixture):
 			   .reshape(-1,1)\
 			   .shape[1] == y_test.reshape(-1,1).shape[1], "y_train and y_test have different number of features"
 	except AssertionError as err:
-		logging.error(f"Testing perform_feature_engineering: {err}")
+		logger.error(f"Testing perform_feature_engineering: {err}")
 		raise err
 	try:
 		assert isinstance(X_train, np.ndarray), "X_train is not a numpy array"	
@@ -377,7 +395,7 @@ def test_perform_feature_engineering(import_dataframe_fixture):
 		assert isinstance(y_train, np.ndarray), "y_train is not a numpy array"	
 		assert isinstance(y_test, np.ndarray), "y_test is not a numpy array"
 	except AssertionError as err:
-		logging.error(f"Testing perform_feature_engineering: {err}")
+		logger.error(f"Testing perform_feature_engineering: {err}")
 		raise err
 
 
@@ -401,7 +419,7 @@ def test_classification_report_image(feature_engineering_fixture):
 	'''
 	test classification_report_image
 	'''
-	logging.info("Testing classification_report_image function")
+	logger.info("Testing classification_report_image function")
 	filename_rf = 'rfc_classification_report.png'
 	test_path_rf = os.path.join(output_dir, filename_rf)
 
@@ -418,14 +436,14 @@ def test_classification_report_image(feature_engineering_fixture):
 							  y_test_preds,
 							  output_dir
 							  )
-		logging.info("Testing classification_report_image: SUCCESS")
+		logger.info("Testing classification_report_image: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing classification_report_image: {err}")
+		logger.error(f"Testing classification_report_image: {err}")
 		raise err
 	try:
 		assert os.path.exists(test_path_rf), f"File {filename_rf} does not exist in {output_dir}"
 	except AssertionError as err:
-		logging.error(f"Testing classification_report_image: {err}")
+		logger.error(f"Testing classification_report_image: {err}")
 		raise err
 	
 
@@ -434,7 +452,7 @@ def test_feature_importance_plot(feature_engineering_fixture):
 	'''
 	test feature_importance_plot
 	'''
-	logging.info("Testing feature_importance_plot function")
+	logger.info("Testing feature_importance_plot function")
 	filename = 'feature_importance_rf.png'
 	test_path = os.path.join(output_dir, filename)
 
@@ -449,14 +467,14 @@ def test_feature_importance_plot(feature_engineering_fixture):
 			features,
 			output_dir
 		)
-		logging.info("Testing feature_importance_plot: SUCCESS")
+		logger.info("Testing feature_importance_plot: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing feature_importance_plot: {err}")
+		logger.error(f"Testing feature_importance_plot: {err}")
 		raise err
 	try:
 		assert os.path.exists(test_path), f"File {filename} does not exist in {output_dir}"
 	except AssertionError as err:
-		logging.error(f"Testing feature_importance_plot: {err}")
+		logger.error(f"Testing feature_importance_plot: {err}")
 		raise err
 	
 
@@ -465,7 +483,7 @@ def test_plot_roc_curve(feature_engineering_fixture):
 	'''
 	test plot_roc_curve
 	'''
-	logging.info("Testing plot_roc_curve function")
+	logger.info("Testing plot_roc_curve function")
 	X_train,\
 	X_test,\
 	y_train,\
@@ -484,14 +502,14 @@ def test_plot_roc_curve(feature_engineering_fixture):
 			y=y_test,
 			output_dir=output_dir
 		)
-		logging.info("Testing plot_roc_curve: SUCCESS")
+		logger.info("Testing plot_roc_curve: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing plot_roc_curve: {err}")
+		logger.error(f"Testing plot_roc_curve: {err}")
 		raise err
 	try:
 		assert os.path.exists(test_path), f"File {filename} does not exist in {output_dir}"
 	except AssertionError as err:
-		logging.error(f"Testing plot_roc_curve: {err}")
+		logger.error(f"Testing plot_roc_curve: {err}")
 		raise err
 
 
@@ -499,7 +517,7 @@ def test_shap_plot(feature_engineering_fixture):
 	'''
 	test shap_plot
 	'''
-	logging.info("Testing shap_plot function")
+	logger.info("Testing shap_plot function")
 	filename = 'shap_summary_plot_rf.png'
 	test_path = os.path.join(output_dir, filename)
 
@@ -514,12 +532,12 @@ def test_shap_plot(feature_engineering_fixture):
 	try:
 		assert isinstance(features, list), "Features are not provided as a list"
 	except AssertionError as err:
-		logging.error(f"Testing shap_plot: {err}")
+		logger.error(f"Testing shap_plot: {err}")
 		raise err
 	try:		
 		assert len(features) == X_test.shape[1], "Number of features does not match the model input"
 	except AssertionError as err:
-		logging.error(f"Testing shap_plot: {err}")
+		logger.error(f"Testing shap_plot: {err}")
 		raise err
 	try:
 		shap_plot(
@@ -528,14 +546,14 @@ def test_shap_plot(feature_engineering_fixture):
 			features,
 			output_dir
 		)
-		logging.info("Testing shap_plot: SUCCESS")
+		logger.info("Testing shap_plot: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing shap_plot: {err}")
+		logger.error(f"Testing shap_plot: {err}")
 		raise err
 	try:
 		assert os.path.exists(test_path), f"File {filename} does not exist in {output_dir}"
 	except AssertionError as err:
-		logging.error(f"Testing shap_plot: {err}")
+		logger.error(f"Testing shap_plot: {err}")
 		raise err
 	
 
@@ -543,7 +561,7 @@ def test_train_models(feature_engineering_fixture):
 	'''
 	test train_models
 	'''
-	logging.info("Testing train_models function")
+	logger.info("Testing train_models function")
 
 	X_train, X_test, y_train, y_test = feature_engineering_fixture
 
@@ -565,14 +583,14 @@ def test_train_models(feature_engineering_fixture):
 			output_dir_models=output_dir_models_test
 		)
 		success = 1
-		logging.info("Testing train_models: SUCCESS")
+		logger.info("Testing train_models: SUCCESS")
 	except Exception as err:
-		logging.error(f"Testing train_models: {err}")
+		logger.error(f"Testing train_models: {err}")
 		raise err
 	try:
 		assert success == 1, "train_models did not complete successfully"
 	except AssertionError as err:
-		logging.error(f"Testing train_models: {err}")
+		logger.error(f"Testing train_models: {err}")
 		raise err
 	try:
 		filename_rf = 'rfc_classification_report.png'
@@ -612,12 +630,14 @@ def test_train_models(feature_engineering_fixture):
 		path_lr = os.path.join(output_dir_models_test, filename_lr)
 		assert os.path.exists(path_lr), f"File {filename_lr} does not exist in {output_dir_models_test}"
 	except AssertionError as err:
-		logging.error(f"Testing train_models: {err}")
+		logger.error(f"Testing train_models: {err}")
 		raise err
 		
 
 
 if __name__ == "__main__":
+	logger.info("Starting tests for churn prediction library")
+	# Run all tests
 	test_import()
 	test_create_target()
 	test_create_target_dist_plot()

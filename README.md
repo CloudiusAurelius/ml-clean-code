@@ -43,7 +43,7 @@ python churn_library.py
 
 - Run tests with: 
 ```Bash
-pytest churn_script_logging_and_tests.py
+pytest churn_script_logging_and_tests.py --log-file=./logs/churn_library_tests.log
 ``` 
     - for debugging we can run:
 ```Bash
