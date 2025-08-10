@@ -49,7 +49,7 @@ def setup_logging(
 
     return logger
 
-logger = setup_logging(filename='./logs/test_log.log')
+logger = setup_logging(filename='./logs/churn_libary_tests.log')
 
 
 # Define variables

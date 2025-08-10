@@ -30,41 +30,27 @@ import sklearn.base
 
 
 # Set up logging
-"""
-logging.basicConfig(
-    filename='./logs/pipeline_results.log',
-    level=logging.INFO,
-    filemode='w',
-    format='%(name)s - %(levelname)s - %(message)s')
-"""
+def setup_logging(
+        filename,
+        format='%(asctime)s - %(levelname)s - %(message)s'):
+    """
+    Set up logging configuration.
+    """
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
 
-def setup_logging():
-     """
-     Set up logging configuration.
-     """
-     # Adding a file handler
-     file_handler = logging.FileHandler('./logs/pipeline_results.log')
-     file_handler.setLevel(logging.INFO)
-     file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    # Adding a file handler
+    file_handler = logging.FileHandler(filename)
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(logging.Formatter(format))
 
-     # Attach the handler to the logger
-     logger = logging.getLogger()
-     logger.addHandler(file_handler)
-     return logger
-     
-# Initialize logger
-logger = setup_logging()
+    # Attach the handler to the logger
+    logger.addHandler(file_handler)
 
-"""
-# Adding a file handler
-file_handler = logging.FileHandler('./logs/pipeline_results.log')
-file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    return logger
 
-# Attach the handler to the logger
-logger = logging.getLogger()
-logger.addHandler(file_handler)
-"""
+logger = setup_logging(filename='./logs/pipeline_results.log')
+
 
 def import_data(pth: str) -> pd.DataFrame:
     '''
@@ -76,18 +62,18 @@ def import_data(pth: str) -> pd.DataFrame:
             df: pandas dataframe
     '''
     # Read csv file
-    logging.info(f"\nImporting data from {pth}")
+    logger.info(f"\nImporting data from {pth}")
     if not os.path.exists(pth):
-        logging.error(f"File not found: {pth}")
+        logger.error(f"File not found: {pth}")
         raise FileNotFoundError(f"The file at {pth} was not found.")
     df = pd.read_csv(pth)
-    logging.info(f"Data imported successfully with shape: {df.shape}")
+    logger.info(f"Data imported successfully with shape: {df.shape}")
 
     # Display
-    logging.info("Displaying first few rows of the dataframe.")
-    logging.info(f"\n{df.head()}")
+    logger.info("Displaying first few rows of the dataframe.")
+    logger.info(f"\n{df.head()}")
 
-    logging.info("Data import complete.")
+    logger.info("Data import complete.")
     return df
 
 
@@ -102,13 +88,13 @@ def create_target(df: pd.DataFrame, target: str = 'Churn') -> pd.DataFrame:
     Output:
             df: pandas dataframe with target column added
     '''
-    logging.info(f"Creating target column [{target}] based on 'Attrition_Flag'.")
+    logger.info(f"Creating target column [{target}] based on 'Attrition_Flag'.")
     
     # Create target column based on 'Attrition_Flag'
     df[target] = df['Attrition_Flag']\
         .apply(lambda val: 0 if val == "Existing Customer" else 1)
 
-    logging.info(f"Target column [{target}] created successfully with unique values: {df[target].unique()}")
+    logger.info(f"Target column [{target}] created successfully with unique values: {df[target].unique()}")
     
     return df
 
@@ -126,7 +112,7 @@ def create_target_dist_plot(df: pd.DataFrame,
     Output:
             None
     '''
-    logging.info("Plotting target distribution.")
+    logger.info("Plotting target distribution.")
     filename = f'{target}_histogram.png'
     output_path = os.path.join(output_dir, filename)
 
@@ -138,7 +124,7 @@ def create_target_dist_plot(df: pd.DataFrame,
     plt.savefig(output_path)
     plt.close()
     
-    logging.info(f"Target distribution plot for [{target}] saved in {output_path}.")
+    logger.info(f"Target distribution plot for [{target}] saved in {output_path}.")
 
 
 def create_bar_plot(df: pd.DataFrame,
@@ -152,7 +138,7 @@ def create_bar_plot(df: pd.DataFrame,
     Output:
         None
     '''
-    logging.info(f"Creating bar plot for feature: {column}")
+    logger.info(f"Creating bar plot for feature: {column}")
     filename = f'cat_{column}_bar_plot.png'
     output_path = os.path.join(output_dir, filename)
 
@@ -162,7 +148,7 @@ def create_bar_plot(df: pd.DataFrame,
         .plot(kind='bar', title=column)
     plt.savefig(output_path)
     plt.close()
-    logging.info(f"Bar plot for {column} saved in {output_path}.")
+    logger.info(f"Bar plot for {column} saved in {output_path}.")
 
 
 def create_histogram(df: pd.DataFrame,
@@ -176,7 +162,7 @@ def create_histogram(df: pd.DataFrame,
         Output:
                 None
         '''
-        logging.info(f"Creating histogram for feature: {column}")
+        logger.info(f"Creating histogram for feature: {column}")
         filename = f'quant_{column}_histogram.png'
         output_path = os.path.join(output_dir, filename)
 
@@ -185,7 +171,7 @@ def create_histogram(df: pd.DataFrame,
         plt.title(column)
         plt.savefig(output_path)
         plt.close()
-        logging.info(f"Histogram for {column} saved in {output_path}.")
+        logger.info(f"Histogram for {column} saved in {output_path}.")
 
 
 def create_density_plot(df: pd.DataFrame,
@@ -199,7 +185,7 @@ def create_density_plot(df: pd.DataFrame,
         Output:
                 None
         '''
-        logging.info(f"Plotting density for: {column}")
+        logger.info(f"Plotting density for: {column}")
         filename = f'quant_{column}_density_plot.png'
         output_path = os.path.join(output_dir, filename)
 
@@ -208,7 +194,7 @@ def create_density_plot(df: pd.DataFrame,
         plt.title(f'Density Plot for {column}')
         plt.savefig(output_path)
         plt.close()
-        logging.info(f"Density plot for {column} saved in {output_path}.")
+        logger.info(f"Density plot for {column} saved in {output_path}.")
 
 
 def create_heatmap(df: pd.DataFrame,
@@ -221,7 +207,7 @@ def create_heatmap(df: pd.DataFrame,
                 None
         '''
         # Define paths
-        logging.info("Plotting correlation heatmap.")
+        logger.info("Plotting correlation heatmap.")
         filename = 'correlation_heatmap.png'
         output_path = os.path.join(output_dir, filename)
 
@@ -235,7 +221,7 @@ def create_heatmap(df: pd.DataFrame,
         plt.title("Correlation Heatmap")
         plt.savefig(output_path)
         plt.close()
-        logging.info(f"Correlation heatmap saved in {output_path}.")
+        logger.info(f"Correlation heatmap saved in {output_path}.")
 
 
 def perform_eda(df: pd.DataFrame,                
@@ -250,42 +236,42 @@ def perform_eda(df: pd.DataFrame,
     Output:
             None
     '''
-    logging.info("\nPerforming EDA on the dataframe.")
-    logging.info(f"DataFrame shape: {df.shape}")
+    logger.info("\nPerforming EDA on the dataframe.")
+    logger.info(f"DataFrame shape: {df.shape}")
 
     # Missing values
-    logging.info("Checking for missing values in the dataframe:")
+    logger.info("Checking for missing values in the dataframe:")
     missing_values = df.isnull().sum()
-    logging.info(f"\n{missing_values}")
+    logger.info(f"\n{missing_values}")
 
     # Descriptive statistics
-    logging.info("Generating descriptive statistics for the dataframe:")
-    logging.info(f"\n{df.describe()}")
+    logger.info("Generating descriptive statistics for the dataframe:")
+    logger.info(f"\n{df.describe()}")
 
     # Plotting target distribution
-    logging.info("Plotting target distribution.")
+    logger.info("Plotting target distribution.")
     create_target_dist_plot(df, target, output_dir)
 
     # Bar plot categorical features
-    logging.info("Plotting categorical features.")
+    logger.info("Plotting categorical features.")
     for column in cat_columns:
         create_bar_plot(df, column, output_dir)
 
     # Histogram for quantitative features
-    logging.info("Plotting quantitative features.")
+    logger.info("Plotting quantitative features.")
     for column in quant_columns:
         create_histogram(df, column, output_dir)
 
     # Density plot for quantitative features
-    logging.info("Plotting density plots for quantitative features.")
+    logger.info("Plotting density plots for quantitative features.")
     for column in quant_columns:
         create_density_plot(df, column, output_dir)
 
     # Correlation heatmap
-    logging.info("Creating correlation heatmap.")
+    logger.info("Creating correlation heatmap.")
     create_heatmap(df, output_dir)
 
-    logging.info("EDA performed successfully.")
+    logger.info("EDA performed successfully.")
     
     
 
@@ -307,23 +293,23 @@ def encoder_helper(df: pd.DataFrame,
     Output:
             df: pandas dataframe with new columns for
     '''
-    logging.info("Encoding categorical features with churn proportions.")
+    logger.info("Encoding categorical features with churn proportions.")
 
     # Use response name if provided, else fallback to target
     col_suffix = response if response else target.lower()
-    logging.info(f"Using '{col_suffix}' as column suffix for encoding.")
+    logger.info(f"Using '{col_suffix}' as column suffix for encoding.")
 
 
     for category in category_lst:
-            logging.info(f"Encoding category: {category}")             
+            logger.info(f"Encoding category: {category}")             
                        
             # Create a new column with the churn proportions
             new_col_name = f"{category}_{col_suffix}"
-            logging.info(f"Creating new column: {new_col_name}")
+            logger.info(f"Creating new column: {new_col_name}")
             df[new_col_name] = df\
                                .groupby(category)[target]\
                                .transform('mean')
-            logging.info(f"Encoded {category} with churn proportions\
+            logger.info(f"Encoded {category} with churn proportions\
                          in column: {new_col_name}")
 
     return df
@@ -344,15 +330,15 @@ def perform_feature_engineering(df: pd.DataFrame,\
               y_train: numpy array y training data
               y_test: numpy array y testing data
     '''
-    logging.info("Performing feature engineering.")
+    logger.info("Performing feature engineering.")
 
     # Separate features and target
-    logging.info(f"Separating features and target: {target}")
+    logger.info(f"Separating features and target: {target}")
     X = df[keep_cols].values
     y = df[target].values
 
-    logging.info(f"Features shape: {X.shape}, Target shape: {y.shape}")
-    logging.info(f"Features preview:\n{X[0:5]}")
+    logger.info(f"Features shape: {X.shape}, Target shape: {y.shape}")
+    logger.info(f"Features preview:\n{X[0:5]}")
 
     # Split the data into training and testing sets        
     X_train,\
@@ -362,7 +348,7 @@ def perform_feature_engineering(df: pd.DataFrame,\
        X, y, test_size=0.3, random_state=42
     )
 
-    logging.info(f"Data split into training and testing sets:\n"
+    logger.info(f"Data split into training and testing sets:\n"
                  f"X_train shape: {X_train.shape},\
                         X_test shape: {X_test.shape}, "
                  f"y_train shape: {y_train.shape},\
@@ -393,17 +379,17 @@ def classification_report_image(y_train: np.ndarray,
     Output:
              None
     '''
-    logging.info("Generating classification reports for training and testing data.")
+    logger.info("Generating classification reports for training and testing data.")
     
 
     # Random Forest Classifier
     # ----------------------------------------------
-    logging.info("Random Forest Classifier")
+    logger.info("Random Forest Classifier")
 
     filename_rf = 'rfc_classification_report.png'
     save_path_rf = os.path.join(output_dir, filename_rf)
     
-    logging.info("Generating and saving classification report for Random Forest Classifier.")
+    logger.info("Generating and saving classification report for Random Forest Classifier.")
 
     # Generate classification report
     plt.rc('figure', figsize=(5, 5))
@@ -420,7 +406,7 @@ def classification_report_image(y_train: np.ndarray,
 
     # Logistic Regression Classifier
     # ----------------------------------------------    
-    logging.info("Logistic Regression Classifier")
+    logger.info("Logistic Regression Classifier")
 
     filename_lr = 'lc_classification_report.png'
     save_path_lr = os.path.join(output_dir, filename_lr)
@@ -434,7 +420,7 @@ def classification_report_image(y_train: np.ndarray,
     plt.axis('off')
 
     # Save the classification report as an image
-    logging.info("Saving classification report for Logistic Regression Classifier.")
+    logger.info("Saving classification report for Logistic Regression Classifier.")
     plt.savefig(save_path_lr)
     plt.close()
     
@@ -482,7 +468,7 @@ def feature_importance_plot(model: sklearn.base.BaseEstimator,
     plt.xticks(range(len(feature_names)), names, rotation=90)
 
     # save the plot
-    logging.info(f"Saving feature importance plot to {output_pth}")
+    logger.info(f"Saving feature importance plot to {output_pth}")
     plt.savefig(output_pth)
     plt.close()
 
@@ -508,7 +494,7 @@ def plot_roc_curve(model1,
 
         model1_name = model1.__class__.__name__.lower()
         if model2 is None:
-                logging.info(f"Plotting ROC curve of model: {model1.__class__.__name__}")
+                logger.info(f"Plotting ROC curve of model: {model1.__class__.__name__}")
                 filename = f'{model1_name}_roc_curve.png'
                 output_path = os.path.join(output_dir, filename)
                         
@@ -519,10 +505,10 @@ def plot_roc_curve(model1,
                 plt.ylabel("True Positive Rate")
                 plt.savefig(output_path)
                 plt.close()
-                logging.info(f"ROC curve for {model1_name} saved in {output_path}.")
+                logger.info(f"ROC curve for {model1_name} saved in {output_path}.")
         else:                
                 model2_name = model2.__class__.__name__.lower()
-                logging.info(f"Plotting ROC curves of models: {model1} and {model2}")
+                logger.info(f"Plotting ROC curves of models: {model1} and {model2}")
                 filename = f'{model1_name}_{model2_name}_roc_curve.png'
                 output_path = os.path.join(output_dir, filename)
 
@@ -548,7 +534,7 @@ def plot_roc_curve(model1,
                 plt.ylabel("True Positive Rate")
                 plt.savefig(output_path)
                 plt.close()
-                logging.info(f"ROC curve for {model1_name} and {model2_name} saved in {output_path}.")  
+                logger.info(f"ROC curve for {model1_name} and {model2_name} saved in {output_path}.")  
 
 
 
@@ -580,7 +566,7 @@ def shap_plot(model: sklearn.base.BaseEstimator,
     )
     plt.savefig(output_path)
     plt.close('all')
-    logging.info(f"SHAP summary plot for Random Forest Classifier saved in {output_path}.")
+    logger.info(f"SHAP summary plot for Random Forest Classifier saved in {output_path}.")
         
 
 
@@ -602,28 +588,28 @@ def train_models(X_train: np.ndarray,
     Output:
               None
     '''
-    logging.info("Training models on the training data.")
+    logger.info("Training models on the training data.")
     
     # Grid search parameters
-    logging.info("Defining parameter grid for Grid Search.")
+    logger.info("Defining parameter grid for Grid Search.")
     param_grid = { 
         'n_estimators': [200, 500],
         'max_features': ['sqrt', 'log2'],
         'max_depth' : [4,5,100],
         'criterion' :['gini', 'entropy']
     }
-    logging.info(f"Parameter grid: {param_grid}")
+    logger.info(f"Parameter grid: {param_grid}")
 
     # Fit the models
     #---------------------------------------------
-    logging.info("Initializing and fitting models.")
+    logger.info("Initializing and fitting models.")
 
     # Random Forest Classifier
-    logging.info("Initializing Random Forest Classifier.")
+    logger.info("Initializing Random Forest Classifier.")
     rfc = RandomForestClassifier(random_state=42)
 
     # Fit the Random Forest model
-    logging.info("Fitting Random Forest Classifier.")
+    logger.info("Fitting Random Forest Classifier.")
     cv_rfc = GridSearchCV(
          estimator=rfc,
          param_grid=param_grid,
@@ -632,42 +618,42 @@ def train_models(X_train: np.ndarray,
     cv_rfc.fit(X_train, y_train)
 
     # Logistic Regression
-    logging.info("Initializing Logistic Regression.")
+    logger.info("Initializing Logistic Regression.")
     lrc = LogisticRegression(solver='lbfgs', max_iter=5000)
 
     # Fit the Logistic Regression model
-    logging.info("Fitting Logistic Regression.")
+    logger.info("Fitting Logistic Regression.")
     lrc.fit(X_train, y_train)
 
 
     # Store the models
     # ----------------------------------------------
-    logging.info("Storing trained models in the models directory.")
+    logger.info("Storing trained models in the models directory.")
     
     filename_rc = 'rfc_model.pkl'
     path_rc = os.path.join(output_dir_models, filename_rc)
     
     joblib.dump(cv_rfc.best_estimator_, path_rc)
-    logging.info(f"Random Forest Classifier model stored as '{path_rc}'")
+    logger.info(f"Random Forest Classifier model stored as '{path_rc}'")
 
     filename_lr = 'logistic_model.pkl'
     path_lr = os.path.join(output_dir_models, filename_lr)
     
     joblib.dump(lrc, path_lr)
-    logging.info(f"Logistic Regression model stored as '{path_lr}'")
+    logger.info(f"Logistic Regression model stored as '{path_lr}'")
 
 
     # Predict on training and testing data
     # ----------------------------------------------
-    logging.info("Making predictions with trained models.")
+    logger.info("Making predictions with trained models.")
     
     # Predict on training and testing data with Random Forest Classifier and Logistic Regression
-    logging.info("Making predictions with Random Forest Classifier.")
+    logger.info("Making predictions with Random Forest Classifier.")
     y_train_preds_rf = cv_rfc.best_estimator_.predict(X_train)
     y_test_preds_rf = cv_rfc.best_estimator_.predict(X_test)
 
     # Predict on training and testing data with Logistic Regression
-    logging.info("Making predictions with Logistic Regression.")
+    logger.info("Making predictions with Logistic Regression.")
     y_train_preds_lr = lrc.predict(X_train)
     y_test_preds_lr = lrc.predict(X_test)   
 
@@ -686,7 +672,7 @@ def train_models(X_train: np.ndarray,
     # ROC curve
     # ----------------------------------------------   
     # Plot ROC curve for Random Forest Classifer
-    logging.info("Plotting ROC curve for Random Forest Classifier.")
+    logger.info("Plotting ROC curve for Random Forest Classifier.")
     plot_roc_curve(
          model1=cv_rfc.best_estimator_,
          X=X_test,
@@ -695,7 +681,7 @@ def train_models(X_train: np.ndarray,
     )
 
     # Plot ROC curve for Logistic Regression
-    logging.info("Plotting ROC curve for Logistic Regression.")
+    logger.info("Plotting ROC curve for Logistic Regression.")
     plot_roc_curve(
          model1=lrc,
          X=X_test,
@@ -704,7 +690,7 @@ def train_models(X_train: np.ndarray,
     )
 
     # Combined ROC curve
-    logging.info("Plotting combined ROC curve for both models.")
+    logger.info("Plotting combined ROC curve for both models.")
     plot_roc_curve(
          model1=cv_rfc.best_estimator_,
          X=X_test,
@@ -716,10 +702,10 @@ def train_models(X_train: np.ndarray,
 
     # Detailed Analyses for Random Forest Classifier
     # ----------------------------------------------
-    logging.info("Detailed analyses for Random Forest Classifier.")
+    logger.info("Detailed analyses for Random Forest Classifier.")
     
     # Tree Explainer
-    logging.info("Using SHAP Tree Explainer for Random Forest Classifier.")    
+    logger.info("Using SHAP Tree Explainer for Random Forest Classifier.")    
     shap_plot(
          cv_rfc.best_estimator_,
          X_test,
@@ -728,7 +714,7 @@ def train_models(X_train: np.ndarray,
     )
             
     # Feature importance plot    
-    logging.info("Creating feature importance plot for Random Forest Classifier.")    
+    logger.info("Creating feature importance plot for Random Forest Classifier.")    
     feature_importance_plot(
          cv_rfc.best_estimator_,
          feature_names,
@@ -824,4 +810,4 @@ if __name__ == "__main__":
          feature_names=features
     )
     
-    logging.info("Churn prediction pipeline completed successfully.")
+    logger.info("Churn prediction pipeline completed successfully.")
