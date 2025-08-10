@@ -23,7 +23,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
-#from sklearn.metrics import plot_roc_curve, classification_report
 from sklearn.metrics import RocCurveDisplay, classification_report
 import sklearn.base
 
@@ -39,13 +38,22 @@ def setup_logging(
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
 
-    # Adding a file handler
+    # Create formatter
+    formatter = logging.Formatter(format)
+
+    # Create and configure file handler
     file_handler = logging.FileHandler(filename)
     file_handler.setLevel(logging.INFO)
-    file_handler.setFormatter(logging.Formatter(format))
+    file_handler.setFormatter(formatter)
+
+    # Create and configure stream handler (prints to console)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
+    stream_handler.setFormatter(formatter)
 
     # Attach the handler to the logger
     logger.addHandler(file_handler)
+    logger.addHandler(stream_handler)
 
     return logger
 
@@ -388,18 +396,19 @@ def classification_report_image(y_train: np.ndarray,
 
     filename_rf = 'rfc_classification_report.png'
     save_path_rf = os.path.join(output_dir, filename_rf)
-    
-    logger.info("Generating and saving classification report for Random Forest Classifier.")
+        
 
     # Generate classification report
+    logger.info("Generating and saving classification report for Random Forest Classifier.")
+
     plt.rc('figure', figsize=(5, 5))
     plt.text(0.01, 1.25, str('Random Forest Train'), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.6, str('Random Forest Test'), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_rf)), {'fontsize': 10}, fontproperties = 'monospace')    
     plt.axis('off')    
-    plt.xlim(0, 1) #
-    plt.ylim(0, 1.3) #
+    plt.xlim(0, 1)
+    plt.ylim(0, 1.3)
 
     plt.savefig(save_path_rf)
     plt.close()
@@ -411,16 +420,18 @@ def classification_report_image(y_train: np.ndarray,
     filename_lr = 'lc_classification_report.png'
     save_path_lr = os.path.join(output_dir, filename_lr)
 
-    # Generate classification report
+    # Generate and save classification report as an image    
+    logger.info("Saving classification report for Logistic Regression Classifier.")
+    
     plt.rc('figure', figsize=(5, 5))
     plt.text(0.01, 1.25, str('Logistic Regression Train'), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.05, str(classification_report(y_train, y_train_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.6, str('Logistic Regression Test'), {'fontsize': 10}, fontproperties = 'monospace')
     plt.text(0.01, 0.7, str(classification_report(y_test, y_test_preds_lr)), {'fontsize': 10}, fontproperties = 'monospace')
     plt.axis('off')
-
-    # Save the classification report as an image
-    logger.info("Saving classification report for Logistic Regression Classifier.")
+    plt.xlim(0, 1)
+    plt.ylim(0, 1.3)
+    
     plt.savefig(save_path_lr)
     plt.close()
     
@@ -507,8 +518,10 @@ def plot_roc_curve(model1,
                 plt.close()
                 logger.info(f"ROC curve for {model1_name} saved in {output_path}.")
         else:                
+                model1_name = model1.__class__.__name__.lower()
                 model2_name = model2.__class__.__name__.lower()
-                logger.info(f"Plotting ROC curves of models: {model1} and {model2}")
+
+                logger.info(f"Plotting ROC curves of models: {model1_name} and {model2_name}")
                 filename = f'{model1_name}_{model2_name}_roc_curve.png'
                 output_path = os.path.join(output_dir, filename)
 
