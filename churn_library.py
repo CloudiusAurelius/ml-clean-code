@@ -103,14 +103,15 @@ def create_target(df: pd.DataFrame, target: str = 'Churn') -> pd.DataFrame:
         .apply(lambda val: 0 if val == "Existing Customer" else 1)
 
     logger.info(
-        f"Target column [{target}] created successfully with unique values: {df[target].unique()}")
+        "Target column [%s] created\
+        successfully with unique values: %s", target, df[target].unique())
 
     return df
 
 
 def create_target_dist_plot(df: pd.DataFrame,
                             target: str = 'Churn',
-                            output_dir: str = f'./images/') -> None:
+                            output_dir: str = './images/') -> None:
     '''
     Create a bar plot for the target distribution.
 
@@ -139,7 +140,7 @@ def create_target_dist_plot(df: pd.DataFrame,
 
 def create_bar_plot(df: pd.DataFrame,
                     column: str,
-                    output_dir: str = f'./images/') -> None:
+                    output_dir: str = './images/') -> None:
     '''
     Helper function to create bar plots for categorical features.
     Input:
@@ -163,7 +164,7 @@ def create_bar_plot(df: pd.DataFrame,
 
 def create_histogram(df: pd.DataFrame,
                      column: str,
-                     output_dir: str = f'./images/') -> None:
+                     output_dir: str = './images/') -> None:
     '''
     Helper function to create histograms for quantitative features.
     Input:
@@ -186,7 +187,7 @@ def create_histogram(df: pd.DataFrame,
 
 def create_density_plot(df: pd.DataFrame,
                         column: str,
-                        output_dir: str = f'./images/') -> None:
+                        output_dir: str = './images/') -> None:
     '''
     Helper function to create density plots for quantitative features.
     Input:
@@ -208,7 +209,7 @@ def create_density_plot(df: pd.DataFrame,
 
 
 def create_heatmap(df: pd.DataFrame,
-                   output_dir: str = f'./images/') -> None:
+                   output_dir: str = './images/') -> None:
     '''
     Helper function to create a heatmap for the correlation matrix of the dataframe.
     Input:
@@ -238,7 +239,7 @@ def perform_eda(df: pd.DataFrame,
                 cat_columns: list,
                 quant_columns: list,
                 target: str = 'Churn',
-                output_dir: str = f'./images/') -> None:
+                output_dir: str = './images/') -> None:
     '''
     Perform EDA on df and save figures to images folder
     Input:
@@ -596,15 +597,17 @@ def shap_plot(model: sklearn.base.BaseEstimator,
     '''
     filename = 'shap_summary_plot_rf.png'
     output_path = os.path.join(output_dir, filename)
-
+  
+    # Create SHAP summary plot
+    # - show=False prevents immediate display and ensures the plot is saved
     plt.figure(figsize=(10, 5))
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(X)
     shap.summary_plot(
         shap_values[:, :, 1],
         X,
-        feature_names,
-        plot_type="bar"
+        feature_names,        
+        show=False
     )
     plt.savefig(output_path)
     plt.close('all')
@@ -633,14 +636,11 @@ def train_models(X_train: np.ndarray,
 
     # Grid search parameters
     logger.info("Defining parameter grid for Grid Search.")
-    #param_grid = {
-    #    'n_estimators': [200, 500],
-    #    'max_features': ['sqrt', 'log2'],
-    #    'max_depth': [4, 5, 100],
-    #    'criterion': ['gini', 'entropy']
-    #}
     param_grid = {
-        'n_estimators': [200, 500]
+        'n_estimators': [200, 500],
+        'max_features': ['sqrt', 'log2'],
+        'max_depth': [4, 5, 100],
+        'criterion': ['gini', 'entropy']
     }
     logger.info("Parameter grid: %s", param_grid)
 
@@ -663,8 +663,7 @@ def train_models(X_train: np.ndarray,
 
     # Logistic Regression
     logger.info("Initializing Logistic Regression.")
-    #lrc = LogisticRegression(solver='lbfgs', max_iter=5000)
-    lrc = LogisticRegression(solver='lbfgs', max_iter=500)
+    lrc = LogisticRegression(solver='lbfgs', max_iter=5000)    
 
     # Fit the Logistic Regression model
     logger.info("Fitting Logistic Regression.")
@@ -748,12 +747,12 @@ def train_models(X_train: np.ndarray,
 
     # Tree Explainer
     logger.info("Using SHAP Tree Explainer for Random Forest Classifier.")
-    #shap_plot(
-    #    cv_rfc.best_estimator_,
-    #    X_test,
-    #    feature_names,
-    #    output_dir_images
-    #)
+    shap_plot(
+        cv_rfc.best_estimator_,
+        X_test,
+        feature_names,
+        output_dir_images
+    )
 
     # Feature importance plot
     logger.info("Creating feature importance plot for Random Forest Classifier.")
