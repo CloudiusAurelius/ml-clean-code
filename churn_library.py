@@ -545,25 +545,35 @@ def plot_roc_curve(model1,
         filename = f'{model1_name}_{model2_name}_roc_curve.png'
         output_path = os.path.join(output_dir, filename)
 
+        
+        # Plot ROC curves for both models
+        plt.figure(figsize=(15, 8))
+        ax = plt.gca()
         m1_plot = RocCurveDisplay\
             .from_estimator(
                 model1, X, y,
-                ax=ax, alpha=alpha
-            ).plot()
-
-        plt.figure(figsize=(15, 8))
-        ax = plt.gca()
+                ax=ax, alpha=alpha,
+                label=model1_name
+            )
         m2_plot = RocCurveDisplay\
             .from_estimator(
                 model2, X, y,
                 ax=ax, alpha=alpha,
                 label=model2_name
-            )\
-            .plot()
-        m1_plot.plot(ax=ax, alpha=alpha, label=model1_name)
+            )
+        m1_plot.plot(ax=ax)
+        m2_plot.plot(ax=ax)
+        
+        # Set title and labels
         plt.title(f"ROC Curve - {model1_name} vs {model2_name}")
         plt.xlabel("False Positive Rate")
         plt.ylabel("True Positive Rate")
+
+        # Keep the last two entries in the legend
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles[-2:], labels[-2:], loc='lower right')
+
+        # Save the plot
         plt.savefig(output_path)
         plt.close()
         logger.info(
@@ -623,11 +633,14 @@ def train_models(X_train: np.ndarray,
 
     # Grid search parameters
     logger.info("Defining parameter grid for Grid Search.")
+    #param_grid = {
+    #    'n_estimators': [200, 500],
+    #    'max_features': ['sqrt', 'log2'],
+    #    'max_depth': [4, 5, 100],
+    #    'criterion': ['gini', 'entropy']
+    #}
     param_grid = {
-        'n_estimators': [200, 500],
-        'max_features': ['sqrt', 'log2'],
-        'max_depth': [4, 5, 100],
-        'criterion': ['gini', 'entropy']
+        'n_estimators': [200, 500]
     }
     logger.info("Parameter grid: %s", param_grid)
 
@@ -650,7 +663,8 @@ def train_models(X_train: np.ndarray,
 
     # Logistic Regression
     logger.info("Initializing Logistic Regression.")
-    lrc = LogisticRegression(solver='lbfgs', max_iter=5000)
+    #lrc = LogisticRegression(solver='lbfgs', max_iter=5000)
+    lrc = LogisticRegression(solver='lbfgs', max_iter=500)
 
     # Fit the Logistic Regression model
     logger.info("Fitting Logistic Regression.")
@@ -734,12 +748,12 @@ def train_models(X_train: np.ndarray,
 
     # Tree Explainer
     logger.info("Using SHAP Tree Explainer for Random Forest Classifier.")
-    shap_plot(
-        cv_rfc.best_estimator_,
-        X_test,
-        feature_names,
-        output_dir_images
-    )
+    #shap_plot(
+    #    cv_rfc.best_estimator_,
+    #    X_test,
+    #    feature_names,
+    #    output_dir_images
+    #)
 
     # Feature importance plot
     logger.info("Creating feature importance plot for Random Forest Classifier.")
